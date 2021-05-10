@@ -1,0 +1,15 @@
+units real
+atom_style charge
+read_data ${filename}.system
+pair_style reax/c NULL safezone 5.0 mincap 5000
+pair_coeff * * ${potential_file} Al O
+neighbor 5.0 bin
+neigh_modify every 1 delay 0 check no
+fix 1 all nvt temp ${temperature_of_system} ${temperature_of_system} 100.0
+fix 2 all qeq/reax 1 0.0 10.0 1e-6 reax/c
+dump coordinates all xyz ${write_data_frequency} ${filename}.xyz
+dump velocities all custom ${write_data_frequency} ${filename}.velocities id vx vy vz
+dump_modify velocities sort id
+thermo ${write_data_frequency}
+timestep ${md_timestep_fs}
+run ${num_steps}

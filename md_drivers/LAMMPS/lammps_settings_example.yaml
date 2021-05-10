@@ -1,0 +1,10 @@
+name: LAMMPS
+temperature_of_system: 300
+md_timestep_fs: 1.0
+write_data_frequency: 10
+relaxation_num_steps: 2000
+deposition_num_steps: 15000
+potential_file: alox.reax
+atomic_weights:
+  - 26.9815386
+  - 15.9994

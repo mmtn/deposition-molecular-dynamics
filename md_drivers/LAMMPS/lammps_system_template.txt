@@ -1,0 +1,9 @@
+# Substrate info
+
+${num_atoms} atoms
+${num_atom_types} atom types
+
+0 ${lx} xlo xhi
+0 ${ly} ylo yhi
+0 ${lz} zlo zhi
+

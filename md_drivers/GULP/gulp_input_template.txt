@@ -1,0 +1,14 @@
+conv md
+library streitzmintmire
+integrator leapfrog verlet
+cell
+${lx} ${ly} ${lz} ${alpha} ${beta} ${gamma}
+temperature ${temperature_of_system}
+equilibration ${equilibration_time_ps} ps
+production ${production_time_ps} ps
+timestep ${md_time_step_ps} ps
+sample ${sample_rate_ps} ps
+write ${write_rate_ps} ps
+output trajectory ${filename}.trj
+output xyz movie ${filename}.xyz
+ensemble nvt ${thermostat_damping}
