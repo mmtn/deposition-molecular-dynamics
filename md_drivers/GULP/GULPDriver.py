@@ -31,6 +31,7 @@ class GULPDriver:
 
         def write_velocities(filename, velocities):
             with open(filename, "a") as file:
+                file.write("velocities\n")
                 for ii, v in enumerate(velocities):
                     file.write(f"{ii} {v[0]} {v[1]} {v[2]}\n")
 
@@ -53,17 +54,15 @@ class GULPDriver:
             return max(round(nose_hoover, 6), minimum_nose_hoover_parameter)
 
         input_filename = f"{filename}.input"
-        template = self.settings
-        template.update(self.substrate)
-        template["thermostat_damping"] = thermostat_damping(len(elements), template["temperature_of_system"])
-        template["filename"] = filename
+        settings = self.settings
+        settings.update(self.substrate)
+        settings["thermostat_damping"] = thermostat_damping(len(elements), settings["temperature_of_system"])
+        settings["filename"] = filename
         if velocities is None:
-            template["production_time_ps"] = template["relaxation_time_ps"]
+            settings["production_time_ps"] = settings["relaxation_time_ps"]
         else:
-            template["production_time_ps"] = template["deposition_time_ps"]
-
-        io.write_file_using_template(self.input_template, input_filename, template)
-
+            settings["production_time_ps"] = settings["deposition_time_ps"]
+        io.write_file_using_template(input_filename, self.input_template, settings)
         write_positions(input_filename, coordinates, elements)
         if velocities is not None:
             write_velocities(input_filename, velocities)

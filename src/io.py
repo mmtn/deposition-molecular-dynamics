@@ -46,18 +46,14 @@ def read_status():
 
 
 def read_xyz(xyz_file, step=None):
-    def get_xyz_info(xyz_file):
-        """
-        Get the number of lines in the file and the number of atoms
-        """
-        num_lines = sum(1 for _ in open(xyz_file))
-        with open(xyz_file) as file:
-            num_atoms = int(file.readline())
-        lines_per_step = num_atoms + 2
-        total_steps = int(num_lines / lines_per_step)
-        return num_lines, num_atoms, lines_per_step, total_steps
-
-    num_lines, num_atoms, lines_per_step, total_steps = get_xyz_info(xyz_file)
+    """
+    Get the number of lines in the file and the number of atoms
+    """
+    num_lines = sum(1 for _ in open(xyz_file))
+    with open(xyz_file) as file:
+        num_atoms = int(file.readline())
+    lines_per_step = num_atoms + 2
+    total_steps = int(num_lines / lines_per_step)
 
     step_header_lines = 2
     if step is None:
@@ -78,7 +74,7 @@ def read_xyz(xyz_file, step=None):
     return coordinates, elements, num_atoms
 
 
-def write_file_using_template(template_filename, output_filename, yaml_path_or_dict):
+def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
     if isinstance(yaml_path_or_dict, dict):
         dictionary = yaml_path_or_dict
     elif isinstance(yaml_path_or_dict, str):
@@ -117,7 +113,7 @@ def start_logging(log_filename):
     logger.addHandler(log_to_stdout)
 
 
-def read_state(pickle_file="saved_state.pickle"):
+def read_state(pickle_file):
     with open(pickle_file, "rb") as file:
         data = pickle.load(file)
     coordinates = data["coordinates"]

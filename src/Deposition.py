@@ -2,18 +2,18 @@ from src import io, Iteration
 
 
 class Deposition:
-    def __init__(self, settings_filename, command_prefix):
+    def __init__(self, settings_filename):
         self.settings = io.read_yaml(settings_filename)
         self.substrate = io.read_yaml(self.settings["substrate_information"])
         self.driver_settings = io.read_yaml(self.settings["driver_settings"])
         self.driver = self.get_driver()
-        self.command_prefix = command_prefix
         self.iteration_number, self.num_sequential_failures, _ = io.read_status()
+        self.command_prefix = self.settings["command_prefix"]
         self.max_iterations = self.settings["maximum_total_iterations"]
         self.max_failures = self.settings["maximum_sequential_failures"]
 
     def first_run(self):
-        coordinates, elements, _ = io.read_xyz(self.substrate["xyz_file"])
+        coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
         io.make_directories(("current", "iterations", "failed"))
         pickle_location = "initial_positions.pickle"
         io.write_state(coordinates, elements, velocities=None, pickle_location=pickle_location)

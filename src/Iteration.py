@@ -4,13 +4,13 @@ import shutil
 import subprocess
 from string import Template
 
-from src import io, new_atoms
+from src import io, atoms
 
 
 class Iteration:
-    def __init__(self, driver, inputs, command_prefix):
+    def __init__(self, driver, settings, command_prefix):
         self.driver = driver
-        self.inputs = inputs
+        self.settings = settings
         self.command_prefix = command_prefix
         self.iteration_number, _, self.pickle_location = io.read_status()
         self.working_directory = "current"  # TODO: make this an optional input
@@ -33,7 +33,7 @@ class Iteration:
 
     def deposition(self):
         coordinates, elements, velocities = io.read_state(f"{self.relaxation_filename}.pickle")
-        coordinates, elements, velocities = new_atoms.add(self.inputs, coordinates, elements, velocities)
+        coordinates, elements, velocities = atoms.generate(self.settings, self.driver, coordinates, elements, velocities)
         self.driver.write_inputs(self.deposition_filename, coordinates, elements, velocities)
         self.call_process(self.deposition_filename)
         coordinates, elements, velocities = self.driver.read_outputs(self.deposition_filename)

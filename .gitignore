@@ -1,5 +1,6 @@
 .idea/
-calculation/
+calculations/
 venv/
 
+*test*.py
 **.DS_Store
