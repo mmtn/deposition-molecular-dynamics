@@ -37,7 +37,7 @@ class LAMMPSDriver:
         io.write_file_using_template(f"{filename}.input", self.input_template, settings)
 
         # Convert from string labels to number labels where required
-        elements = [species.index(ii) if ii in species else ii for ii in elements]
+        elements = [(species.index(ii) + 1) if ii in species else ii for ii in elements]
         element_integers = [int(ii) for ii in elements]
         num_atoms = len(elements)
         indices = range(1, num_atoms + 1)

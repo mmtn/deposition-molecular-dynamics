@@ -1,5 +1,6 @@
 units real
 atom_style charge
+box tilt large
 read_data ${filename}.input_data
 pair_style reax/c NULL safezone 5.0 mincap 5000
 pair_coeff * * ${potential_file} ${species_list}
