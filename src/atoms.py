@@ -2,19 +2,11 @@ import logging
 
 import numpy as np
 from pymatgen.core.periodic_table import Element
-from pymatgen.core.lattice import Lattice
-from pymatgen.io.lammps.data import lattice_2_lmpbox
-from shapely.geometry import Polygon
 
-from src import maths, physics
+from src import maths, physics, structural_analysis
 
 
 def generate(settings, driver, coordinates, elements, velocities):
-    def get_surface_height(substrate, coordinates, percentage_of_box_to_search=80.0):
-        cutoff = substrate["c"] * (percentage_of_box_to_search / 100)
-        z = [xyz[2] for xyz in coordinates if xyz[2] < cutoff]
-        return max(z)
-
     num_deposited = settings["num_deposited_per_iteration"]
     gas_temperature = settings["deposition_temperature"]
     deposition_type = settings["deposition_type"]
@@ -23,9 +15,10 @@ def generate(settings, driver, coordinates, elements, velocities):
     deposition_element = Element(settings["deposition_element"])
     particle_mass = deposition_element.atomic_mass * physics.CONSTANTS["AtomicMassUnit_kg"]
     velocity_scaling = driver.settings["velocity_scaling_from_metres_per_second"]
-    surface_height = get_surface_height(driver.substrate, coordinates)
+    surface_height = structural_analysis.get_surface_height(driver.substrate, coordinates)
     new_z_position = surface_height + deposition_height
 
+    logging.info(f"generating coordinates and velocities for deposited atom(s)")
     for ii in range(num_deposited):
         if deposition_type == "monatomic":
             coordinates_new = random_monatomic_position(driver.substrate, new_z_position)
@@ -34,7 +27,6 @@ def generate(settings, driver, coordinates, elements, velocities):
         elif deposition_type == "diatomic":
             bond_length = float(settings["diatomic_bond_length_Angstroms"])
             coordinates_new = random_diatomic_position(driver.substrate, new_z_position, bond_length)
-            print(coordinates_new)
             elements_new = [deposition_element.name for _ in range(2)]
             velocities_new = random_diatomic_velocities(gas_temperature, particle_mass, bond_length, minimum_velocity)
         else:

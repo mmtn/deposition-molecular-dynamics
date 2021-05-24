@@ -11,6 +11,22 @@ from string import Template
 import numpy as np
 
 
+def start_logging(log_filename):
+    logger = logging.getLogger('')
+    logger.setLevel(logging.INFO)
+    log_to_file = logging.FileHandler(log_filename)
+    log_to_stdout = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        "[%(asctime)s] %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s",
+        datefmt="%a, %d %b %Y %H:%M:%S"
+    )
+    log_to_file.setFormatter(formatter)
+    log_to_stdout.setFormatter(formatter)
+    logger.addHandler(log_to_file)
+    logger.addHandler(log_to_stdout)
+    logging.info(f"logging to {log_filename} and stdout")
+
+
 def make_directories(names):
     for name in names:
         try:
@@ -40,24 +56,31 @@ def read_status():
         status = read_yaml("status.yaml")
     except FileNotFoundError:
         logging.info("no status.yaml file found, making a new one")
-        write_status(iteration_number=1, num_failures=0)
+        write_status(iteration_number=1, num_sequential_failures=0)
         return read_status()
-    return int(status["iteration_number"]), int(status["num_failures"]), status["pickle_location"]
+    return int(status["iteration_number"]), int(status["num_sequential_failures"]), status["pickle_location"]
+
+
+def write_status(iteration_number, num_sequential_failures, pickle_location=None):
+    status = {"last_updated": dt.now(),
+              "iteration_number": iteration_number,
+              "num_sequential_failures": num_sequential_failures,
+              "pickle_location": pickle_location}
+    with open("status.yaml", "w") as file:
+        yaml.dump(status, file)
 
 
 def read_xyz(xyz_file, step=None):
-    """
-    Get the number of lines in the file and the number of atoms
-    """
+    # Get the number of lines in the file and the number of atoms
+    header_lines_per_step = 2
     num_lines = sum(1 for _ in open(xyz_file))
     with open(xyz_file) as file:
         num_atoms = int(file.readline())
-    lines_per_step = num_atoms + 2
+    lines_per_step = num_atoms + header_lines_per_step
     total_steps = int(num_lines / lines_per_step)
 
-    step_header_lines = 2
     if step is None:
-        num_lines_to_skip = lines_per_step * (total_steps - 1) + step_header_lines
+        num_lines_to_skip = (lines_per_step * (total_steps - 1)) + header_lines_per_step
     elif step == 1:
         num_lines_to_skip = 0
     else:
@@ -71,49 +94,12 @@ def read_xyz(xyz_file, step=None):
             for atom in atom_data
         ]
         elements = [atom[0] for atom in atom_data]
+
     return coordinates, elements, num_atoms
 
 
-def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
-    if isinstance(yaml_path_or_dict, dict):
-        dictionary = yaml_path_or_dict
-    elif isinstance(yaml_path_or_dict, str):
-        dictionary = read_yaml(yaml_path_or_dict)
-    else:
-        raise TypeError()
-
-    with open(template_filename) as file:
-        template = Template(file.read())
-        result = template.substitute(dictionary)
-    with open(output_filename, "w") as file:
-        file.write(result)
-
-
-def write_status(iteration_number, num_failures, pickle_location=None):
-    status = {"last_updated": dt.now(),
-              "iteration_number": iteration_number,
-              "num_failures": num_failures,
-              "pickle_location": pickle_location}
-    with open("status.yaml", "w") as file:
-        yaml.dump(status, file)
-
-
-def start_logging(log_filename):
-    logger = logging.getLogger('')
-    logger.setLevel(logging.WARNING)
-    log_to_file = logging.FileHandler(log_filename)
-    log_to_stdout = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        "[%(asctime)s] %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s",
-        datefmt="%a, %d %b %Y %H:%M:%S"
-    )
-    log_to_file.setFormatter(formatter)
-    log_to_stdout.setFormatter(formatter)
-    logger.addHandler(log_to_file)
-    logger.addHandler(log_to_stdout)
-
-
 def read_state(pickle_file):
+    logging.info(f"reading state from {pickle_file}")
     with open(pickle_file, "rb") as file:
         data = pickle.load(file)
     coordinates = data["coordinates"]
@@ -122,11 +108,27 @@ def read_state(pickle_file):
     return coordinates, elements, velocities
 
 
-def write_state(coordinates, elements, velocities, pickle_location="saved_state.pickle"):
+def write_state(coordinates, elements, velocities, pickle_file="saved_state.pickle"):
+    logging.info(f"writing state to {pickle_file}")
     data = {
         "coordinates": coordinates,
         "elements": elements,
         "velocities": velocities
     }
-    with open(pickle_location, "wb") as file:
+    with open(pickle_file, "wb") as file:
         pickle.dump(data, file)
+
+
+def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
+    if isinstance(yaml_path_or_dict, dict):
+        dictionary = yaml_path_or_dict
+    elif isinstance(yaml_path_or_dict, str):
+        dictionary = read_yaml(yaml_path_or_dict)
+    else:
+        raise TypeError("template information must be path to yaml file or dict")
+
+    with open(template_filename) as file:
+        template = Template(file.read())
+        result = template.substitute(dictionary)
+    with open(output_filename, "w") as file:
+        file.write(result)
