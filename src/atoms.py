@@ -49,16 +49,14 @@ def generate(settings, driver, coordinates, elements, velocities):
 
 
 def random_monatomic_position(substrate, new_z_position):
-    lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**substrate))
-    lx, ly, lz = lammps_box.bounds
-    xy, xz, yz = lammps_box.tilt
-    relative_height = new_z_position / lz[1]
-    xz_shift = xz * relative_height
-    yz_shift = yz * relative_height
-    polygon_coordinates = [(0, 0), (0, lx[1]), (0 + xy, ly[1]), (lx[1] + xy, ly[1])]
-    polygon_coordinates = np.add(polygon_coordinates, [(xz_shift, yz_shift)])
-    polygon = Polygon(polygon_coordinates)
-    point = maths.get_random_point_in_polygon(polygon)
+    base_polygon_coordinates = [(substrate["xlo"], substrate["ylo"]),
+                                (substrate["xhi"], substrate["ylo"]),
+                                (substrate["xlo"] + substrate["xy"], substrate["yhi"]),
+                                (substrate["xhi"] + substrate["xy"], substrate["yhi"])]
+    relative_height = new_z_position / (substrate["zhi"] - substrate["zlo"])
+    relative_shift = substrate["zvec"] * relative_height
+    polygon_coordinates = np.add(base_polygon_coordinates, relative_shift[0:1])
+    point = maths.get_random_point_in_polygon(polygon_coordinates)
     return np.array((point.x, point.y, new_z_position))
 
 
@@ -94,7 +92,3 @@ def random_diatomic_velocities(gas_temperature, particle_mass, bond_length, mini
     vz1 = vz + tangential_xy
     vz2 = vz - tangential_xy
     return np.array(((vx, vy1, vz1), (vx, vy2, vz2)))
-
-
-
-

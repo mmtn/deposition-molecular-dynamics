@@ -4,8 +4,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from pymatgen.io.lammps.data import LammpsData, lattice_2_lmpbox
-from pymatgen.core.lattice import Lattice
+from pymatgen.io.lammps.data import LammpsData
 
 from src import io
 
@@ -17,7 +16,7 @@ class LAMMPSDriver:
         self.path = os.path.dirname(os.path.realpath(__file__))
         self.name = "LAMMPS"
         self.binary = "~/work/repos/lammps/src/lmp_serial"
-        self.command_syntax = "${prefix} ${binary} < ${input_file} > ${output_file}"
+        self.command_syntax = "${prefix} ${binary} -in ${input_file} > ${output_file}"
         self.input_template = f"{self.path}/lammps_input_template.txt"
 
     def after_calculation(self, calculation_directory, archived_directory):
@@ -45,13 +44,12 @@ class LAMMPSDriver:
         mass_indices = range(1, len(masses) + 1)
 
         # Create LammpsData object from system information
-        lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**self.substrate))
         masses_df = DataFrame(masses, index=mass_indices, columns=["mass"])
         charges_df = DataFrame(np.zeros((num_atoms, 1)), index=indices, columns=["q"])
         elements_df = DataFrame(element_integers, index=indices, columns=["type"])
         coordinates_df = DataFrame(coordinates, index=indices, columns=["x", "y", "z"])
         atoms_df = pd.concat((elements_df, charges_df, coordinates_df), axis=1)
-        data = LammpsData(lammps_box, masses_df, atoms_df, atom_style="charge")
+        data = LammpsData(self.substrate["lammps_box"], masses_df, atoms_df, atom_style="charge")
         if velocities is not None:
             data.velocities = DataFrame(velocities, index=indices, columns=["vx", "vy", "vz"])
         data.write_file(f"{filename}.input_data")
