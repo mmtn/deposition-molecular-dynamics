@@ -10,14 +10,14 @@ def get_surface_height(substrate, coordinates, percentage_of_box_to_search=80.0)
 
 def wrap_periodic_coordinates_in_z(coordinates, substrate):
     lz = substrate["zhi"] - substrate["zlo"]
-    return [coordinates[ii] - substrate["zvec"] if z > (lz * 0.8) else coordinates[ii]
+    return [coordinates[ii] - substrate["z_vector"] if z > (lz * 0.8) else coordinates[ii]
             for ii, (x, y, z) in enumerate(coordinates)]
 
 
 def periodic_images_xy(coordinates, substrate, num_copies=1):
     coordinates_periodic_xy = coordinates
-    x_shift = substrate["xvec"]
-    y_shift = substrate["yvec"]
+    x_shift = substrate["x_vector"]
+    y_shift = substrate["y_vector"]
     total_copies = (num_copies * 2) + 1
     for ix, iy in np.ndindex(total_copies, total_copies):
         x = ix - num_copies

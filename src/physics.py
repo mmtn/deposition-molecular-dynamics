@@ -24,5 +24,3 @@ def velocity_from_normal_distribution(gas_temperature, particle_mass, mean=0):
     kb = CONSTANTS["BoltzmannConstant"]
     sigma = math.sqrt((kb * gas_temperature) / particle_mass)
     return maths.normal_distribution(mean, sigma)
-
-

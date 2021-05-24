@@ -3,11 +3,6 @@ from shapely.geometry import Polygon, Point
 
 
 def get_random_point_in_polygon(polygon_coordinates):
-    """
-
-    :param polygon_coordinates:
-    :return point:
-    """
     polygon = Polygon(polygon_coordinates)
     x_min, y_min, x_max, y_max = polygon.bounds
     while True:
@@ -17,7 +12,4 @@ def get_random_point_in_polygon(polygon_coordinates):
 
 
 def normal_distribution(mean, sigma):
-    """
-    Returns a single number from a Gaussian distribution with the given parameters.
-    """
     return np.random.normal(loc=mean, scale=sigma)

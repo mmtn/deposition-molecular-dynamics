@@ -8,8 +8,8 @@ from src import io, Iteration
 class Deposition:
     def __init__(self, settings_filename):
         self.settings = io.read_yaml(settings_filename)
-        self.substrate = self.get_substrate()
         self.driver_settings = io.read_yaml(self.settings["driver_settings"])
+        self.substrate = self.get_substrate()
         self.driver = self.get_driver()
         self.iteration_number, self.num_sequential_failures, _ = io.read_status()
         self.command_prefix = self.settings["command_prefix"]
@@ -30,9 +30,9 @@ class Deposition:
         substrate["xy"] = xy
         substrate["xz"] = xz
         substrate["yz"] = yz
-        substrate["xvec"] = np.array((xhi - xlo, 0, 0))
-        substrate["yvec"] = np.array((xy, yhi - ylo, 0))
-        substrate["zvec"] = np.array((xz, yz, zhi - zlo))
+        substrate["x_vector"] = np.array((xhi - xlo, 0, 0))
+        substrate["y_vector"] = np.array((xy, yhi - ylo, 0))
+        substrate["z_vector"] = np.array((xz, yz, zhi - zlo))
         substrate["lammps_box"] = lammps_box
         return substrate
 

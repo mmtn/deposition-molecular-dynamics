@@ -46,7 +46,7 @@ def random_monatomic_position(substrate, new_z_position):
                                 (substrate["xlo"] + substrate["xy"], substrate["yhi"]),
                                 (substrate["xhi"] + substrate["xy"], substrate["yhi"])]
     relative_height = new_z_position / (substrate["zhi"] - substrate["zlo"])
-    relative_shift = substrate["zvec"] * relative_height
+    relative_shift = substrate["z_vector"] * relative_height
     polygon_coordinates = np.add(base_polygon_coordinates, relative_shift[0:1])
     point = maths.get_random_point_in_polygon(polygon_coordinates)
     return np.array((point.x, point.y, new_z_position))
