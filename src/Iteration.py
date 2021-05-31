@@ -8,11 +8,11 @@ from src import io, atoms, structural_analysis
 
 
 class Iteration:
-    def __init__(self, driver, settings, command_prefix):
+    def __init__(self, driver, settings, iteration_number, pickle_location):
         self.driver = driver
         self.settings = settings
-        self.command_prefix = command_prefix
-        self.iteration_number, _, self.pickle_location = io.read_status()
+        self.iteration_number = iteration_number
+        self.pickle_location = pickle_location
         self.working_directory = "current"
         self.deposition_filename = f"{self.working_directory}/deposition{self.iteration_number:03d}"
         self.relaxation_filename = f"{self.working_directory}/relaxation{self.iteration_number:03d}"
@@ -30,7 +30,7 @@ class Iteration:
         self.driver.write_inputs(self.relaxation_filename, coordinates, elements, velocities)
         self.call_process(self.relaxation_filename)
         coordinates, elements, velocities = self.driver.read_outputs(self.relaxation_filename)
-        io.write_state(coordinates, elements, velocities, pickle_file=f"{self.relaxation_filename}.pickle")
+        io.write_state(coordinates, elements, velocities, pickle_location=f"{self.relaxation_filename}.pickle")
 
     def deposition(self):
         coordinates, elements, velocities = io.read_state(f"{self.relaxation_filename}.pickle")
@@ -39,7 +39,7 @@ class Iteration:
         self.call_process(self.deposition_filename)
         coordinates, elements, velocities = self.driver.read_outputs(self.deposition_filename)
         self.check_outcome(coordinates, elements)
-        io.write_state(coordinates, elements, velocities=None, pickle_file=f"{self.deposition_filename}.pickle")
+        io.write_state(coordinates, elements, velocities=None, pickle_location=f"{self.deposition_filename}.pickle")
 
     def finish(self):
         if self.success:
@@ -58,7 +58,7 @@ class Iteration:
 
     def call_process(self, filename):
         command_settings = dict()
-        command_settings["prefix"] = self.command_prefix
+        command_settings["prefix"] = self.settings["command_prefix"]
         command_settings["binary"] = self.driver.binary
         command_settings["input_file"] = f"{filename}.input"
         command_settings["output_file"] = f"{filename}.output"

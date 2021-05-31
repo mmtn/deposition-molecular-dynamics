@@ -6,7 +6,6 @@ import pickle
 import sys
 
 import yaml
-from datetime import datetime as dt
 from string import Template
 import numpy as np
 
@@ -63,33 +62,6 @@ def read_yaml(filename):
         return yaml.full_load(file)
 
 
-def read_status():
-    """Reads information about the current state of the deposition simulation"""
-    try:
-        status = read_yaml("status.yaml")
-    except FileNotFoundError:
-        logging.info("no status.yaml file found, making a new one")
-        write_status(iteration_number=1, num_sequential_failures=0)
-        return read_status()
-    return int(status["iteration_number"]), int(status["num_sequential_failures"]), status["pickle_location"]
-
-
-def write_status(iteration_number, num_sequential_failures, pickle_location=None):
-    """
-    Writes information about the current state of the deposition simulation
-
-    :param iteration_number: how many iterations have been performed
-    :param num_sequential_failures: how many times in a row iterations have failed
-    :param pickle_location: the most recent location of saved data
-    """
-    status = {"last_updated": dt.now(),
-              "iteration_number": iteration_number,
-              "num_sequential_failures": num_sequential_failures,
-              "pickle_location": pickle_location}
-    with open("status.yaml", "w") as file:
-        yaml.dump(status, file)
-
-
 def read_xyz(xyz_file, step=None):
     """
     Reads data from either the first or last step of an XYZ file.
@@ -128,45 +100,6 @@ def read_xyz(xyz_file, step=None):
     return coordinates, elements, num_atoms
 
 
-def read_state(pickle_file):
-    """
-    Reads current state of calculation from pickle file. The pickle file stores the coordinates, species (elements),
-    and velocities of all simulated atoms.
-
-    :param pickle_file: path to pickle file
-    :return coordinates: Nx3 numpy array for N atoms
-    :return elements: Nx1 list of strings for N atoms
-    :return velocities: Nx3 numpy array for N atoms
-    """
-    logging.info(f"reading state from {pickle_file}")
-    with open(pickle_file, "rb") as file:
-        data = pickle.load(file)
-    coordinates = data["coordinates"]
-    elements = data["elements"]
-    velocities = data["velocities"]
-    return coordinates, elements, velocities
-
-
-def write_state(coordinates, elements, velocities, pickle_file="saved_state.pickle"):
-    """
-    Writes current state of calculation to pickle file. The pickle file stores the coordinates, species (elements),
-    and velocities of all simulated atoms.
-
-    :param coordinates: Nx3 numpy array for N atoms
-    :param elements: Nx1 list of strings for N atoms
-    :param velocities: Nx3 numpy array for N atoms
-    :param pickle_file: path to pickle file
-    """
-    logging.info(f"writing state to {pickle_file}")
-    data = {
-        "coordinates": coordinates,
-        "elements": elements,
-        "velocities": velocities
-    }
-    with open(pickle_file, "wb") as file:
-        pickle.dump(data, file)
-
-
 def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
     """
     Generic function for using the stdlib template module to perform find and replace
@@ -188,3 +121,42 @@ def write_file_using_template(output_filename, template_filename, yaml_path_or_d
 
     with open(output_filename, "w") as file:
         file.write(result)
+
+
+def read_state(pickle_location):
+    """
+    Reads current state of calculation from pickle file. The pickle file stores the coordinates, species (elements),
+    and velocities of all simulated atoms.
+
+    :param pickle_location: path to pickle file
+    :return coordinates: Nx3 numpy array for N atoms
+    :return elements: Nx1 list of strings for N atoms
+    :return velocities: Nx3 numpy array for N atoms
+    """
+    logging.info(f"reading state from {pickle_location}")
+    with open(pickle_location, "rb") as file:
+        data = pickle.load(file)
+    coordinates = data["coordinates"]
+    elements = data["elements"]
+    velocities = data["velocities"]
+    return coordinates, elements, velocities
+
+
+def write_state(coordinates, elements, velocities, pickle_location):
+    """
+    Writes current state of calculation to pickle file. The pickle file stores the coordinates, species (elements),
+    and velocities of all simulated atoms.
+
+    :param coordinates: Nx3 numpy array for N atoms
+    :param elements: Nx1 list of strings for N atoms
+    :param velocities: Nx3 numpy array for N atoms
+    :param pickle_location: path to pickle file
+    """
+    logging.info(f"writing state to {pickle_location}")
+    data = {
+        "coordinates": coordinates,
+        "elements": elements,
+        "velocities": velocities
+    }
+    with open(pickle_location, "wb") as file:
+        pickle.dump(data, file)
