@@ -12,6 +12,11 @@ import numpy as np
 
 
 def start_logging(log_filename):
+    """
+    Starts logging to both stdout and given filename
+
+    :param log_filename: path to write the log file
+    """
     logger = logging.getLogger('')
     logger.setLevel(logging.INFO)
     log_to_file = logging.FileHandler(log_filename)
@@ -28,11 +33,12 @@ def start_logging(log_filename):
 
 
 def make_directories(names):
+    """Creates directories from a list of names and warn user when directories already exist."""
     for name in names:
         try:
             os.mkdir(name)
         except FileExistsError:
-            logging.warning(f"directory \"{name}\" already exist. Check for existing data before proceeding.")
+            logging.warning(f"directory \"{name}\" already exist, check for existing data before proceeding.")
 
 
 def throw_away_lines(iterator, n):
@@ -47,11 +53,18 @@ def throw_away_lines(iterator, n):
 
 
 def read_yaml(filename):
+    """
+    Reads a YAML file to a Python dictionary object.
+
+    :param filename: path to a YAML file
+    :return: dict built from the data in YAML file
+    """
     with open(filename) as file:
         return yaml.full_load(file)
 
 
 def read_status():
+    """Reads information about the current state of the deposition simulation"""
     try:
         status = read_yaml("status.yaml")
     except FileNotFoundError:
@@ -62,6 +75,13 @@ def read_status():
 
 
 def write_status(iteration_number, num_sequential_failures, pickle_location=None):
+    """
+    Writes information about the current state of the deposition simulation
+
+    :param iteration_number: how many iterations have been performed
+    :param num_sequential_failures: how many times in a row iterations have failed
+    :param pickle_location: the most recent location of saved data
+    """
     status = {"last_updated": dt.now(),
               "iteration_number": iteration_number,
               "num_sequential_failures": num_sequential_failures,
@@ -71,6 +91,16 @@ def write_status(iteration_number, num_sequential_failures, pickle_location=None
 
 
 def read_xyz(xyz_file, step=None):
+    """
+    Reads data from either the first or last step of an XYZ file.
+
+    :param xyz_file: path to XYZ file
+    :param step: (default=None) reads last step when equal to None, first step when equal to 1
+    :return coordinates: Nx3 numpy array for N atoms
+    :return elements: Nx1 list of strings for N atoms
+    :return num_atoms: int, the number of atoms (N)
+    """
+
     # Get the number of lines in the file and the number of atoms
     header_lines_per_step = 2
     num_lines = sum(1 for _ in open(xyz_file))
@@ -99,6 +129,15 @@ def read_xyz(xyz_file, step=None):
 
 
 def read_state(pickle_file):
+    """
+    Reads current state of calculation from pickle file. The pickle file stores the coordinates, species (elements),
+    and velocities of all simulated atoms.
+
+    :param pickle_file: path to pickle file
+    :return coordinates: Nx3 numpy array for N atoms
+    :return elements: Nx1 list of strings for N atoms
+    :return velocities: Nx3 numpy array for N atoms
+    """
     logging.info(f"reading state from {pickle_file}")
     with open(pickle_file, "rb") as file:
         data = pickle.load(file)
@@ -109,6 +148,15 @@ def read_state(pickle_file):
 
 
 def write_state(coordinates, elements, velocities, pickle_file="saved_state.pickle"):
+    """
+    Writes current state of calculation to pickle file. The pickle file stores the coordinates, species (elements),
+    and velocities of all simulated atoms.
+
+    :param coordinates: Nx3 numpy array for N atoms
+    :param elements: Nx1 list of strings for N atoms
+    :param velocities: Nx3 numpy array for N atoms
+    :param pickle_file: path to pickle file
+    """
     logging.info(f"writing state to {pickle_file}")
     data = {
         "coordinates": coordinates,
@@ -120,15 +168,23 @@ def write_state(coordinates, elements, velocities, pickle_file="saved_state.pick
 
 
 def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
+    """
+    Generic function for using the stdlib template module to perform find and replace
+
+    :param output_filename: path of file to write
+    :param template_filename: path to plain text template
+    :param yaml_path_or_dict: either dict or path to YAML file with key/value pairs used for find and replace
+    """
     if isinstance(yaml_path_or_dict, dict):
         dictionary = yaml_path_or_dict
     elif isinstance(yaml_path_or_dict, str):
         dictionary = read_yaml(yaml_path_or_dict)
     else:
-        raise TypeError("template information must be path to yaml file or dict")
+        raise TypeError("template information must be path to YAML file or dict")
 
     with open(template_filename) as file:
         template = Template(file.read())
         result = template.substitute(dictionary)
+
     with open(output_filename, "w") as file:
         file.write(result)
