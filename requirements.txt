@@ -4,3 +4,4 @@ PyYAML==5.4.1
 pymatgen==2022.0.8
 Shapely==1.7.1
 pandas==1.2.4
+schema==0.7.4

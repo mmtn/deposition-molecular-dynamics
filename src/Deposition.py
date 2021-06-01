@@ -2,65 +2,119 @@ import logging
 from datetime import datetime as dt
 
 import numpy as np
-import yaml
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 from pymatgen.core.lattice import Lattice
 
-from src import io, Iteration
+from src import schema_validation, io, Iteration
 
 
 class Deposition:
+    status_filename = "status.yaml"
+    working_directory = "current"
+    success_directory = "iterations"
+    failure_directory = "failed"
+
     def __init__(self, settings_filename):
-        self.settings = io.read_yaml(settings_filename)
-        self.driver_settings = io.read_yaml(self.settings["driver_settings"])
-        self.substrate = self.get_substrate()
-        self.driver = self.get_driver()
-        self.max_iterations = self.settings["maximum_total_iterations"]
-        self.max_failures = self.settings["maximum_sequential_failures"]
+        """
+        :param settings_filename: path to YAML file
+        :type settings_filename: str
+        """
+        self.settings = self.get_settings(settings_filename)
+        self.simulation_cell = self.get_simulation_cell()
+        self.driver = self.get_molecular_dynamics_driver()
         self.iteration_number, self.num_sequential_failures, self.pickle_location = self.read_status()
 
-    def get_substrate(self):
-        substrate = io.read_yaml(self.settings["substrate_information"])
-        lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**substrate))
-        ((xlo, xhi), (ylo, yhi), (zlo, zhi)) = [[entry for entry in axis] for axis in lammps_box.bounds]
-        xy, xz, yz = (0, 0, 0) if lammps_box.tilt is None else lammps_box.tilt
-        substrate["xlo"] = xlo
-        substrate["xhi"] = xhi
-        substrate["ylo"] = ylo
-        substrate["yhi"] = yhi
-        substrate["zlo"] = zlo
-        substrate["zhi"] = zhi
-        substrate["xy"] = xy
-        substrate["xz"] = xz
-        substrate["yz"] = yz
-        substrate["x_vector"] = np.array((xhi - xlo, 0, 0))
-        substrate["y_vector"] = np.array((xy, yhi - ylo, 0))
-        substrate["z_vector"] = np.array((xz, yz, zhi - zlo))
-        substrate["lammps_box"] = lammps_box
-        return substrate
+    @staticmethod
+    def get_settings(settings_filename):
+        """
+        Read and validate the YAML file containing simulation settings
 
-    def get_driver(self):
-        driver_name = self.driver_settings["name"]
-        if driver_name.upper() == "GULP":
-            from md_drivers.GULP import GULPDriver
-            return GULPDriver.GULPDriver(self.driver_settings, self.substrate)
-        elif driver_name.upper() == "LAMMPS":
-            from md_drivers.LAMMPS import LAMMPSDriver
-            return LAMMPSDriver.LAMMPSDriver(self.driver_settings, self.substrate)
+        :param settings_filename: path to YAML file
+        :type settings_filename: str
+        :return settings: validated dictionary of settings
+        :rtype settings: dict
+        """
+        settings = io.read_yaml(settings_filename)
+        settings = schema_validation.settings_schema.validate(settings)
+        return settings
+
+    def get_simulation_cell(self):
+        """
+        Read information about the simulation cell from the specified YAML file.
+        Additional geometry is then calculated using routines from the `pymatgen` module.
+
+        :return simulation_cell: data from YAML file and additional geometry data
+        :rtype simulation_cell: dict
+        """
+        simulation_cell = io.read_yaml(self.settings["simulation_cell_data"])
+        simulation_cell = schema_validation.simulation_cell_schema.validate(simulation_cell)
+        lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
+
+        if lammps_box.tilt is None:
+            tilt_xy, tilt_xz, tilt_yz = (0, 0, 0)
         else:
-            raise NotImplementedError(f"specified MD driver \'{driver_name}\' not found")
+            tilt_xy, tilt_xz, tilt_yz = lammps_box.tilt
 
-    def read_status(self):
+        x_min = lammps_box.bounds[0][0]
+        x_max = lammps_box.bounds[0][1]
+        y_min = lammps_box.bounds[1][0]
+        y_max = lammps_box.bounds[1][1]
+        z_min = lammps_box.bounds[2][0]
+        z_max = lammps_box.bounds[2][1]
+
+        additional_geometry_information = {
+            "x_min": x_min,
+            "x_max": x_max,
+            "y_min": y_min,
+            "y_max": y_max,
+            "z_min": z_min,
+            "z_max": z_max,
+            "tilt_xy": tilt_xy,
+            "tilt_xz": tilt_xz,
+            "tilt_yz": tilt_yz,
+            "x_vector": np.array((x_max - x_min, 0, 0)),
+            "y_vector": np.array((tilt_xy, y_max - y_min, 0)),
+            "z_vector": np.array((tilt_xz, tilt_yz, z_max - z_min)),
+            "lammps_box": lammps_box
+        }
+
+        simulation_cell.update(additional_geometry_information)
+
+        return simulation_cell
+
+    def get_molecular_dynamics_driver(self):
+        """
+        Initialise an instance of the driver for the specified molecular dynamics software
+
+        The instance must provide the following methods:
+        - write_inputs(filename, coordinates, elements, velocities, iteration_stage)
+        - read_outputs(filename)
+
+        :return molecular_dynamics_driver:
+        """
+        driver_settings = io.read_yaml(self.settings["driver_settings"])
+        if driver_settings["name"].upper() == "GULP":
+            from molecular_dynamics_drivers.GULP import GULPDriver
+            molecular_dynamics_driver = GULPDriver.GULPDriver(driver_settings, self.simulation_cell)
+        elif driver_settings["name"].upper() == "LAMMPS":
+            from molecular_dynamics_drivers.LAMMPS import LAMMPSDriver
+            molecular_dynamics_driver = LAMMPSDriver.LAMMPSDriver(driver_settings, self.simulation_cell)
+        else:
+            raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")
+        return molecular_dynamics_driver
+
+    @staticmethod
+    def read_status():
         """Reads information about the current state of the deposition simulation"""
         try:
-            status = io.read_yaml("status.yaml")
+            status = io.read_yaml(Deposition.status_filename)
             iteration_number = int(status["iteration_number"])
             num_sequential_failures = int(status["num_sequential_failures"])
             pickle_location = status["pickle_location"]
             return iteration_number, num_sequential_failures, pickle_location
         except FileNotFoundError:
             logging.info("no status.yaml file found")
-            return (None, None, None)
+            return None, None, None
 
     def write_status(self):
         """Writes information about the current state of the deposition simulation"""
@@ -70,25 +124,39 @@ class Deposition:
             "num_sequential_failures": self.num_sequential_failures,
             "pickle_location": self.pickle_location
         }
-        with open("status.yaml", "w") as file:
-            yaml.dump(status, file)
+        io.write_yaml(Deposition.status_filename, status)
 
-    def first_run(self):
-        self.iteration_number = 1
-        self.num_sequential_failures = 0
-        self.pickle_location = "initial_positions.pickle"
-        coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
-        io.write_state(coordinates, elements, velocities=None, pickle_location=self.pickle_location)
-        io.make_directories(("current", "iterations", "failed"))
-        self.write_status()
+    def initial_setup(self):
+        """
+        Sets up the initial state of simulation, creates required directories.
+        Only runs no "status.yaml" file is found (self.iteration_number is None).
+
+        :return:
+        """
+        if self.iteration_number is None:
+            self.iteration_number = 1
+            self.num_sequential_failures = 0
+            self.pickle_location = "initial_positions.pickle"
+            coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
+            io.write_state(coordinates, elements, velocities=None, pickle_location=self.pickle_location)
+            io.make_directories((Deposition.working_directory,
+                                 Deposition.success_directory,
+                                 Deposition.failure_directory))
+            self.write_status()
 
     def run_loop(self):
-        if self.iteration_number is None:
-            self.first_run()
-        while (self.iteration_number <= self.max_iterations) and (self.num_sequential_failures <= self.max_failures):
+        self.initial_setup()
+        max_iterations = self.settings["maximum_total_iterations"]
+        max_failures = self.settings["maximum_sequential_failures"]
+
+        while (self.iteration_number <= max_iterations) and (self.num_sequential_failures <= max_failures):
             iteration = Iteration.Iteration(self.driver, self.settings, self.iteration_number, self.pickle_location)
             success, self.pickle_location = iteration.run()
-            self.num_sequential_failures = 0 if success else self.num_sequential_failures + 1
+            if success:
+                self.num_sequential_failures = 0
+            else:
+                self.num_sequential_failures += 1
             self.iteration_number += 1
             self.write_status()
+
         return 0

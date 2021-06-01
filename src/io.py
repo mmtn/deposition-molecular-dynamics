@@ -45,9 +45,9 @@ def throw_away_lines(iterator, n):
     Fast way to throw away lines of data we don't need.
     Advance the iterator n-steps ahead. If n is none, consume entirely.
     """
-    if n is None:  # feed the entire iterator into a zero-length deque
+    if n is None:
         collections.deque(iterator, maxlen=0)
-    else:  # advance to the empty slice starting at position n
+    else:
         next(itertools.islice(iterator, n, n), None)
 
 
@@ -59,7 +59,18 @@ def read_yaml(filename):
     :return: dict built from the data in YAML file
     """
     with open(filename) as file:
-        return yaml.full_load(file)
+        return yaml.safe_load(file)
+
+
+def write_yaml(filename, dictionary: dict):
+    """
+    Writes a Python dictionary object to a YAML file.
+
+    :param filename: path to new YAML file
+    :param dictionary: any python dict
+    """
+    with open(filename, "w") as file:
+        yaml.dump(dictionary, file)
 
 
 def read_xyz(xyz_file, step=None):
@@ -72,7 +83,6 @@ def read_xyz(xyz_file, step=None):
     :return elements: Nx1 list of strings for N atoms
     :return num_atoms: int, the number of atoms (N)
     """
-
     # Get the number of lines in the file and the number of atoms
     header_lines_per_step = 2
     num_lines = sum(1 for _ in open(xyz_file))
@@ -100,21 +110,14 @@ def read_xyz(xyz_file, step=None):
     return coordinates, elements, num_atoms
 
 
-def write_file_using_template(output_filename, template_filename, yaml_path_or_dict):
+def write_file_using_template(output_filename, template_filename, dictionary):
     """
     Generic function for using the stdlib template module to perform find and replace
 
     :param output_filename: path of file to write
     :param template_filename: path to plain text template
-    :param yaml_path_or_dict: either dict or path to YAML file with key/value pairs used for find and replace
+    :param dictionary: dict with key/value pairs used for find and replace
     """
-    if isinstance(yaml_path_or_dict, dict):
-        dictionary = yaml_path_or_dict
-    elif isinstance(yaml_path_or_dict, str):
-        dictionary = read_yaml(yaml_path_or_dict)
-    else:
-        raise TypeError("template information must be path to YAML file or dict")
-
     with open(template_filename) as file:
         template = Template(file.read())
         result = template.substitute(dictionary)
