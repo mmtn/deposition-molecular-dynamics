@@ -21,6 +21,13 @@ def get_canonical_variance(num_atoms, temperature=300.0):
 
 
 def velocity_from_normal_distribution(gas_temperature, particle_mass, mean=0):
-    kb = CONSTANTS["BoltzmannConstant"]
-    sigma = math.sqrt((kb * gas_temperature) / particle_mass)
+    """
+    Return a velocity in metres per second randomly selected from a normal distribution."
+
+    :param gas_temperature: temperature of the ideal gas in Kelvin
+    :param particle_mass: mass of the particle in kg
+    :param mean: centre of the distribution in metres per second
+    :return: random velocity in metres per second
+    """
+    sigma = math.sqrt((CONSTANTS["BoltzmannConstant"] * gas_temperature) / particle_mass)
     return maths.normal_distribution(mean, sigma)

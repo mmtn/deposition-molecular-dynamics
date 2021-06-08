@@ -1,5 +1,6 @@
 .idea/
 calculations/
+examples/
 venv/
 
 *test*.py

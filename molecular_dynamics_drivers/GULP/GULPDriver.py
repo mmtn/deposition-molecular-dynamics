@@ -1,26 +1,40 @@
 import itertools
 import os
-import numpy as np
 
-from src import io, physics
+import numpy as np
+from schema import Schema, And, Or, Use, Optional, SchemaError
+
+from src import io, physics, schema_validation
 
 
 class GULPDriver:
-    def __init__(self, driver_settings, substrate):
-        self.settings = driver_settings
-        self.substrate = substrate
-        self.path = os.path.dirname(os.path.realpath(__file__))
-        self.name = "GULP"
-        self.binary = "gulp"
-        self.command_syntax = "${prefix} ${binary} < ${input_file} > ${output_file}"
-        self.input_template = f"{self.path}/gulp_input_template.txt"
+    name = "GULP"
+    command_syntax = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    # TODO: update schema for GULP and test on Gadi
+    schema = Schema({
+        "name": str,
+        "path_to_binary": os.path.exists,
+        "path_to_input_template": os.path.exists,
+        "elements_in_potential": str,  # list of strings
+        "atomic_masses": list,  # list of int/floats
+        "deposition_num_steps": And(int, Use(schema_validation.strictly_positive)),
+        "relaxation_num_steps": And(int, Use(schema_validation.strictly_positive)),
+        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        object: object},  # this line ensures that unlisted keys are also kept after validation
+        ignore_extra_keys=True
+    )
+
+    GULP_LIBRARY_PATH = "path/to/gulp/libraries"  # TODO: check env variable name and path
+
+    def __init__(self, driver_settings, simulation_cell):
+        self.settings = GULPDriver.schema.validate(driver_settings)
+        self.simulation_cell = simulation_cell
+        self.binary = self.settings["path_to_binary"]
         self.set_environment_variables()
 
-    def set_environment_variables(self):
-        os.putenv("GULP_LIBRARY", "path/to/gulp/libraries")  # TODO: check env variable name and path
-
-    def after_calculation(self):
-        pass
+    @staticmethod
+    def set_environment_variables():
+        os.putenv("GULP_LIBRARY", GULPDriver.GULP_LIBRARY_PATH)
 
     def write_inputs(self, filename, coordinates, elements, velocities):
         def write_positions(filename, coordinates, elements):
@@ -55,7 +69,7 @@ class GULPDriver:
 
         input_filename = f"{filename}.input"
         settings = self.settings
-        settings.update(self.substrate)
+        settings.update(self.simulation_cell)
         settings["thermostat_damping"] = thermostat_damping(len(elements), settings["temperature_of_system"])
         settings["filename"] = filename
         if velocities is None:
