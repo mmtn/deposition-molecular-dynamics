@@ -17,6 +17,10 @@ def strictly_positive(number):
     return number
 
 
+def reserved_keyword(value):
+    raise SchemaError("this key is reserved for internal use")
+
+
 simulation_cell_schema = Schema({
     "a": And(Or(int, float), Use(strictly_positive)),
     "alpha": And(Or(int, float), Use(strictly_positive)),

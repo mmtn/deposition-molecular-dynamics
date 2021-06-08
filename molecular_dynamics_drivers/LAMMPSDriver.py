@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,8 @@ from src import io, schema_validation
 class LAMMPSDriver:
     name = "LAMMPS"
     command_syntax = "${prefix} ${binary} -in ${input_file} > ${output_file}"
-    schema = Schema({
+
+    schema_dictionary = {
         "name": str,
         "path_to_binary": os.path.exists,
         "path_to_input_template": os.path.exists,
@@ -20,14 +22,45 @@ class LAMMPSDriver:
         "deposition_num_steps": And(int, Use(schema_validation.strictly_positive)),
         "relaxation_num_steps": And(int, Use(schema_validation.strictly_positive)),
         "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        object: object},  # this line ensures that unlisted keys are also kept after validation
-        ignore_extra_keys=True
-    )
+        object: object,  # this line ensures that unlisted keys are also kept after validation
+    }
+
+    reserved_keywords = [
+        "filename",
+        "num_steps",
+    ]
+
+    for key in reserved_keywords:
+        schema_dictionary.update({Optional(key): Use(schema_validation.reserved_keyword)})
+
+    schema = Schema(schema_dictionary, ignore_extra_keys=True)
 
     def __init__(self, driver_settings, simulation_cell):
-        self.settings = LAMMPSDriver.schema.validate(driver_settings)
+        self.settings = self.validate_schema_and_input_template(driver_settings)
         self.simulation_cell = simulation_cell
         self.binary = self.settings["path_to_binary"]
+
+    @staticmethod
+    def validate_schema_and_input_template(driver_settings):
+        settings = LAMMPSDriver.schema.validate(driver_settings)
+
+        # regex matches any variable placeholder starting with the $ character, either ${with} or $without braces
+        template_variable_regular_expression = r"[\$][{]?([a-z,A-Z][_,a-z,A-Z,0-9]*)[}]?"
+
+        with open(settings["path_to_input_template"]) as file:
+            template_variables = re.findall(template_variable_regular_expression, file.read())
+
+        additional_keys = [key for key in template_variables if key not in LAMMPSDriver.schema.schema.keys()]
+
+        for key in additional_keys:
+            if key in LAMMPSDriver.reserved_keywords:  # ignore reserved keywords
+                continue
+            elif key in settings:  # a value has been provided
+                continue
+            else:  # unknown key
+                raise SchemaError(f"variable '${key}' present in input template but has no set value")
+
+        return settings
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
 
