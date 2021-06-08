@@ -90,18 +90,18 @@ class Deposition:
         - write_inputs(filename, coordinates, elements, velocities, iteration_stage)
         - read_outputs(filename)
 
-        :return molecular_dynamics_driver:
+        :return driver:
         """
         driver_settings = io.read_yaml(self.settings["driver_settings"])
         if driver_settings["name"].upper() == "GULP":
             from molecular_dynamics_drivers.GULP import GULPDriver
-            molecular_dynamics_driver = GULPDriver.GULPDriver(driver_settings, self.simulation_cell)
+            driver = GULPDriver.GULPDriver(driver_settings, self.simulation_cell)
         elif driver_settings["name"].upper() == "LAMMPS":
-            from molecular_dynamics_drivers.LAMMPS import LAMMPSDriver
-            molecular_dynamics_driver = LAMMPSDriver.LAMMPSDriver(driver_settings, self.simulation_cell)
+            from molecular_dynamics_drivers import LAMMPSDriver
+            driver = LAMMPSDriver.LAMMPSDriver(driver_settings, self.simulation_cell)
         else:
             raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")
-        return molecular_dynamics_driver
+        return driver
 
     @staticmethod
     def read_status():

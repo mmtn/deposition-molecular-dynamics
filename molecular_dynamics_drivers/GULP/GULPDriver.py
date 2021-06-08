@@ -10,6 +10,7 @@ from src import io, physics, schema_validation
 class GULPDriver:
     name = "GULP"
     command_syntax = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    # TODO: update schema for GULP and test on Gadi
     schema = Schema({
         "name": str,
         "path_to_binary": os.path.exists,
