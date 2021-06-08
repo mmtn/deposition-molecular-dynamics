@@ -13,7 +13,7 @@ def main(settings_filename, log_filename):
     :param log_filename: (optional; default="deposition.log") path to write the log file
     :return:
     """
-    io.start_logging(log_filename=log_filename)  # TODO make sure logging is working everywhere
+    io.start_logging(log_filename=log_filename)
     deposition = Deposition.Deposition(settings_filename)
     return deposition.run_loop()
 
