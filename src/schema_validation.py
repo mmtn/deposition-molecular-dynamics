@@ -1,10 +1,19 @@
-import os
-from schema import Schema, And, Or, Use, Optional, SchemaError
+import logging
+import re
+from schema import Schema, SchemaError, Use, Optional
 
-ALLOWED_DEPOSITION_TYPES = ("monatomic", "diatomic")
+ALLOWED_DEPOSITION_TYPES = [
+    "monatomic",
+    "diatomic",
+]
+
+RESERVED_KEYWORDS = [
+    "filename",
+    "num_steps",
+]
 
 
-def deposition_type_validation(deposition_type):
+def allowed_deposition_types(deposition_type):
     if deposition_type in ALLOWED_DEPOSITION_TYPES:
         return deposition_type
     else:
@@ -21,28 +30,40 @@ def reserved_keyword(value):
     raise SchemaError("this key is reserved for internal use")
 
 
-simulation_cell_schema = Schema({
-    "a": And(Or(int, float), Use(strictly_positive)),
-    "alpha": And(Or(int, float), Use(strictly_positive)),
-    "b": And(Or(int, float), Use(strictly_positive)),
-    "beta": And(Or(int, float), Use(strictly_positive)),
-    "c": And(Or(int, float), Use(strictly_positive)),
-    "gamma": And(Or(int, float), Use(strictly_positive))
-})
+def check_for_reserved_keywords(driver):
+    for key in RESERVED_KEYWORDS:
+        driver.schema_dictionary.update({Optional(key): Use(reserved_keyword)})
+    schema = Schema(driver.schema_dictionary, ignore_extra_keys=True)
+    schema.validate(driver.settings)
 
-settings_schema = Schema({
-    "deposition_element": str,
-    "deposition_height_Angstroms": And(Or(int, float), Use(strictly_positive)),
-    "deposition_temperature_Kelvin": And(Or(int, float), Use(strictly_positive)),
-    "deposition_type": And(str, Use(deposition_type_validation)),
-    "driver_settings": os.path.exists,
-    "maximum_sequential_failures": And(int, Use(strictly_positive)),
-    "maximum_total_iterations": And(int, Use(strictly_positive)),
-    "minimum_deposition_velocity_metres_per_second": And(Or(int, float), Use(strictly_positive)),
-    "num_deposited_per_iteration": And(int, Use(strictly_positive)),
-    "simulation_cell_data": os.path.exists,
-    "substrate_xyz_file": os.path.exists,
-    Optional("bonding_distance_cutoff_Angstroms"): And(Or(int, float), Use(strictly_positive)),
-    Optional("command_prefix", default=""): str,
-    Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(strictly_positive)),
-})
+
+def check_input_file_syntax(driver):
+    # regex matches any variable placeholder starting with the $ character, either ${with} or $without braces
+    template_key_regular_expression = r"[\$]([{]?[a-z,A-Z][_,a-z,A-Z,0-9]*[}]?)"
+
+    with open(driver.settings["path_to_input_template"]) as file:
+        template_matched_keys = re.findall(template_key_regular_expression, file.read())
+
+    template_keys = list()
+    for key in template_matched_keys:
+        if ("{" in key and "}" not in key) or ("}" in key and "{" not in key):  # check for mismatched delimiters
+            raise SchemaError(f"incomplete variable specification: {key}")
+        template_keys.append(key.strip("{}"))
+
+    for key in template_keys:
+        if key in RESERVED_KEYWORDS:  # ignore reserved keywords
+            continue
+        elif key in driver.settings.keys():  # a value has been provided
+            continue
+        elif key not in driver.settings.keys():  # unknown key
+            raise SchemaError(f"unknown key '{key}' present in input template but has no set value")
+
+    # check for keys in the input file that are not used in the template or elsewhere
+    unused_keys = list()
+    for key in driver.settings:
+        if key not in template_keys and key not in driver.schema.schema:
+            unused_keys.append(key)
+    if len(unused_keys) > 0:
+        logging.warning("unused keys detected in input file:")
+        for key in unused_keys:
+            logging.warning(f"- {key}")

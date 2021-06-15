@@ -5,7 +5,7 @@ import numpy as np
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 from pymatgen.core.lattice import Lattice
 
-from src import schema_validation, io, Iteration
+from src import schema_validation, schema_definitions, io, Iteration
 
 
 class Deposition:
@@ -35,7 +35,7 @@ class Deposition:
         :rtype settings: dict
         """
         settings = io.read_yaml(settings_filename)
-        settings = schema_validation.settings_schema.validate(settings)
+        settings = schema_definitions.settings_schema.validate(settings)
         return settings
 
     def get_simulation_cell(self):
@@ -47,7 +47,7 @@ class Deposition:
         :rtype simulation_cell: dict
         """
         simulation_cell = io.read_yaml(self.settings["simulation_cell_data"])
-        simulation_cell = schema_validation.simulation_cell_schema.validate(simulation_cell)
+        simulation_cell = schema_definitions.simulation_cell_schema.validate(simulation_cell)
         lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
 
         if lammps_box.tilt is None:
@@ -101,6 +101,8 @@ class Deposition:
             driver = LAMMPSDriver.LAMMPSDriver(driver_settings, self.simulation_cell)
         else:
             raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")
+        schema_validation.check_for_reserved_keywords(driver)
+        schema_validation.check_input_file_syntax(driver)
         return driver
 
     @staticmethod
