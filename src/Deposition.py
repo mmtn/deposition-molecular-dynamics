@@ -93,14 +93,16 @@ class Deposition:
         :return driver:
         """
         driver_settings = io.read_yaml(self.settings["driver_settings"])
-        if driver_settings["name"].upper() == "GULP":
-            from molecular_dynamics_drivers.GULP import GULPDriver
+        driver_name = driver_settings["name"].upper()
+        if driver_name == "GULP":
+            from molecular_dynamics_drivers import GULPDriver
             driver = GULPDriver.GULPDriver(driver_settings, self.simulation_cell)
-        elif driver_settings["name"].upper() == "LAMMPS":
+        elif driver_name == "LAMMPS":
             from molecular_dynamics_drivers import LAMMPSDriver
             driver = LAMMPSDriver.LAMMPSDriver(driver_settings, self.simulation_cell)
         else:
             raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")
+        logging.info(f"Using {driver_name} for molecular dynamics")
         schema_validation.check_for_reserved_keywords(driver)
         schema_validation.check_input_file_syntax(driver)
         return driver

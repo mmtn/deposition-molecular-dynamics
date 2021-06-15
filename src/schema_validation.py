@@ -9,7 +9,6 @@ ALLOWED_DEPOSITION_TYPES = [
 
 RESERVED_KEYWORDS = [
     "filename",
-    "num_steps",
 ]
 
 

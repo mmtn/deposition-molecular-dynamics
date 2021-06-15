@@ -1,5 +1,4 @@
 import os
-import re
 
 import numpy as np
 import pandas as pd
@@ -16,11 +15,12 @@ class LAMMPSDriver:
         "name": str,
         "path_to_binary": os.path.exists,
         "path_to_input_template": os.path.exists,
-        "elements_in_potential": str,  # list of strings
+        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
         "atomic_masses": list,  # list of int/floats
+        "elements_in_potential": str,  # list of strings
         "deposition_num_steps": And(int, Use(schema_validation.strictly_positive)),
         "relaxation_num_steps": And(int, Use(schema_validation.strictly_positive)),
-        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        Optional("num_steps"): Use(schema_validation.reserved_keyword),
         str: Or(int, float, str),  # this line ensures that unlisted keys are retained after validation
     }
     schema = Schema(schema_dictionary, ignore_extra_keys=True)
@@ -32,17 +32,20 @@ class LAMMPSDriver:
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
 
-        template_values = self.settings
         input_filename = f"{filename}.input"
         input_data_filename = f"{filename}.input_data"
 
-        # Write input file using template
-        template_values.update({"filename": filename})
-        template_values.update({"elements_in_potential": self.settings["elements_in_potential"]})
+        template_values = self.settings
+
         if iteration_stage == "relaxation":
             template_values.update({"num_steps": self.settings["relaxation_num_steps"]})
         elif iteration_stage == "deposition":
             template_values.update({"num_steps": self.settings["deposition_num_steps"]})
+
+
+        # Write input file using template
+        template_values.update({"filename": filename})
+        template_values.update({"elements_in_potential": self.settings["elements_in_potential"]})
 
         io.write_file_using_template(input_filename, self.settings["path_to_input_template"], template_values)
 
