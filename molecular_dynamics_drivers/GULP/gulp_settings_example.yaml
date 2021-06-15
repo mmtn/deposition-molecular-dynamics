@@ -1,8 +1,0 @@
-name: GULP
-temperature_of_system: 300
-equilibration_time_ps: 0
-relaxation_time_ps: 2
-deposition_time_ps: 15
-md_time_step_ps: 0.001
-sample_rate_ps: 0.01  # TODO: rename this variable
-write_rate_ps: 0.01  # TODO: rename this variable
