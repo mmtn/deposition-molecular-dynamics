@@ -2,17 +2,18 @@ import logging
 import re
 from schema import Schema, SchemaError, Use, Optional
 
+
 ALLOWED_DEPOSITION_TYPES = [
     "monatomic",
     "diatomic",
 ]
 
-RESERVED_KEYWORDS = [
+GLOBALLY_RESERVED_KEYWORDS = [
     "filename",
 ]
 
 
-def allowed_deposition_types(deposition_type):
+def allowed_deposition_type(deposition_type):
     if deposition_type in ALLOWED_DEPOSITION_TYPES:
         return deposition_type
     else:
@@ -26,11 +27,19 @@ def strictly_positive(number):
 
 
 def reserved_keyword(value):
-    raise SchemaError("this key is reserved for internal use")
+    raise SchemaError("this key has been reserved for internal use")
 
 
-def check_for_reserved_keywords(driver):
-    for key in RESERVED_KEYWORDS:
+def get_driver_reserved_keywords(driver):
+    reserved_keywords = list()
+    for key, value in driver.schema_dictionary.items():
+        if type(value) is Use and value._callable.__name__ == "reserved_keyword":
+            reserved_keywords.append(key.schema)
+    return reserved_keywords
+
+
+def add_globally_reserved_keywords(driver):
+    for key in GLOBALLY_RESERVED_KEYWORDS:
         driver.schema_dictionary.update({Optional(key): Use(reserved_keyword)})
     schema = Schema(driver.schema_dictionary, ignore_extra_keys=True)
     schema.validate(driver.settings)
@@ -50,7 +59,7 @@ def check_input_file_syntax(driver):
         template_keys.append(key.strip("{}"))
 
     for key in template_keys:
-        if key in RESERVED_KEYWORDS:  # ignore reserved keywords
+        if key in get_driver_reserved_keywords(driver):  # ignore reserved keywords
             continue
         elif key in driver.settings.keys():  # a value has been provided
             continue
@@ -66,3 +75,4 @@ def check_input_file_syntax(driver):
         logging.warning("unused keys detected in input file:")
         for key in unused_keys:
             logging.warning(f"- {key}")
+
