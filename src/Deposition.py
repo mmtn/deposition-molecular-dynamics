@@ -105,6 +105,8 @@ class Deposition:
         logging.info(f"Using {driver_name} for molecular dynamics")
         schema_validation.check_for_reserved_keywords(driver)
         schema_validation.check_input_file_syntax(driver)
+        driver_settings.update({"deposition_time_picoseconds": self.settings["deposition_time_picoseconds"]})
+        driver_settings.update({"relaxation_time_picoseconds": self.settings["relaxation_time_picoseconds"]})
         return driver
 
     @staticmethod

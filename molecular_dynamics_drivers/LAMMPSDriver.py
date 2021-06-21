@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from pymatgen.io.lammps.data import LammpsData
-from schema import Schema, And, Or, Use, Optional, SchemaError
+from schema import Schema, And, Or, Use, Optional
 
 from src import io, schema_validation
 
@@ -16,10 +16,9 @@ class LAMMPSDriver:
         "path_to_binary": os.path.exists,
         "path_to_input_template": os.path.exists,
         "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "timestep_scaling_from_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
         "atomic_masses": list,  # list of int/floats
         "elements_in_potential": str,  # list of strings
-        "deposition_num_steps": And(int, Use(schema_validation.strictly_positive)),
-        "relaxation_num_steps": And(int, Use(schema_validation.strictly_positive)),
         Optional("num_steps"): Use(schema_validation.reserved_keyword),
         str: Or(int, float, str),  # this line ensures that unlisted keys are retained after validation
     }
@@ -31,17 +30,19 @@ class LAMMPSDriver:
         self.binary = self.settings["path_to_binary"]
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
-
         input_filename = f"{filename}.input"
         input_data_filename = f"{filename}.input_data"
 
         template_values = self.settings
 
         if iteration_stage == "relaxation":
-            template_values.update({"num_steps": self.settings["relaxation_num_steps"]})
+            relaxation_num_steps = self.settings["relaxation_time_picoseconds"] * \
+                                   self.settings["timestep_scaling_from_picoseconds"]
+            template_values.update({"num_steps": relaxation_num_steps})
         elif iteration_stage == "deposition":
-            template_values.update({"num_steps": self.settings["deposition_num_steps"]})
-
+            deposition_num_steps = self.settings["deposition_time_picoseconds"] * \
+                                   self.settings["timestep_scaling_from_picoseconds"]
+            template_values.update({"num_steps": deposition_num_steps})
 
         # Write input file using template
         template_values.update({"filename": filename})

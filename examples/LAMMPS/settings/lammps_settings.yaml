@@ -9,10 +9,9 @@ atomic_masses:
 - 26.9815386
 - 15.9994
 
-# molecular dynamics settings
-relaxation_num_steps: 100
-deposition_num_steps: 400
+# molecular dynamics settings - required conversions change depending on LAMMPS "units" command
 velocity_scaling_from_metres_per_second: 0.00001  # convert to Angstroms/fs
+timestep_scaling_from_ps: 1000  # convert to femtoseconds
 
 # extra values to replace in input template
 potential_file: settings/Hong_and_van_Duin_2015_Al_O.reaxff
