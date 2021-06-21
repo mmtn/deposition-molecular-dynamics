@@ -64,8 +64,8 @@ def random_monatomic_velocity(gas_temperature, particle_mass, minimum_velocity, 
 
 def random_diatomic_position(simulation_cell, new_z_position, bond_length):
     centre_position = random_monatomic_position(simulation_cell, new_z_position)
-    position_atom_1 = centre_position
-    position_atom_2 = centre_position
+    position_atom_1 = centre_position.copy()
+    position_atom_2 = centre_position.copy()
     position_atom_1[0] += bond_length / 2
     position_atom_2[0] -= bond_length / 2
     return np.array((position_atom_1, position_atom_2))
