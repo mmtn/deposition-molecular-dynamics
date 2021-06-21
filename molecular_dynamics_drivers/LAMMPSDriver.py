@@ -38,11 +38,11 @@ class LAMMPSDriver:
         if iteration_stage == "relaxation":
             relaxation_num_steps = self.settings["relaxation_time_picoseconds"] * \
                                    self.settings["timestep_scaling_from_picoseconds"]
-            template_values.update({"num_steps": relaxation_num_steps})
+            template_values.update({"num_steps": int(relaxation_num_steps)})
         elif iteration_stage == "deposition":
             deposition_num_steps = self.settings["deposition_time_picoseconds"] * \
                                    self.settings["timestep_scaling_from_picoseconds"]
-            template_values.update({"num_steps": deposition_num_steps})
+            template_values.update({"num_steps": int(deposition_num_steps)})
 
         # Write input file using template
         template_values.update({"filename": filename})
