@@ -1,7 +1,15 @@
+# PyCharm
 .idea/
-calculations/
-examples/
-venv/
 
-*test*.py
+# Output of examples
+examples/
+
+# Python
+venv/
+**/__pycache__/
+
+# Mac nonsense
 **.DS_Store
+
+# Testing scripts
+*test*.py
