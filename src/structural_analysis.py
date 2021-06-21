@@ -43,7 +43,10 @@ def generate_neighbour_list(coordinates, simulation_cell, bonding_distance_cutof
 
 
 def check_min_neighbours(settings, simulation_cell, coordinates):
-    min_neighbours = settings["num_deposited_per_iteration"]
+    if settings["deposition_type"] == "monatomic":
+        min_neighbours = 1
+    elif settings["deposition_type"] == "diatomic":
+        min_neighbours = 2
     bonding_distance_cutoff = settings["bonding_distance_cutoff_Angstroms"]
     neighbour_list = generate_neighbour_list(coordinates, simulation_cell, bonding_distance_cutoff)
     if np.any(np.less_equal(neighbour_list, min_neighbours)):
