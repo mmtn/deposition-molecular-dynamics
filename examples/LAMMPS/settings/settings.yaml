@@ -39,6 +39,6 @@ driver_settings:
   timestep_scaling_from_picoseconds: 1000  # convert to femtoseconds
   # extra values to replace in input template
   potential_file: settings/Hong_and_van_Duin_2015_Al_O.reaxff
-  temperature_of_system_Kelvin: 300
+  temperature_of_system: 300
   molecular_dynamics_timestep: 1.0
   write_data_every_n_steps: 10
