@@ -15,10 +15,6 @@ class Deposition:
     failure_directory = "failed"
 
     def __init__(self, settings_filename):
-        """
-        :param settings_filename: path to YAML file
-        :type settings_filename: str
-        """
         self.settings = self.get_settings(settings_filename)
         self.simulation_cell = self.get_simulation_cell()
         self.driver = self.get_molecular_dynamics_driver()
@@ -26,27 +22,17 @@ class Deposition:
 
     @staticmethod
     def get_settings(settings_filename):
-        """
-        Read and validate the YAML file containing simulation settings
-
-        :param settings_filename: path to YAML file
-        :type settings_filename: str
-        :return settings: validated dictionary of settings
-        :rtype settings: dict
-        """
-        settings = io.read_yaml(settings_filename)
+        """Read and validate the YAML file containing simulation settings"""
+        settings = io.read_yaml_or_dict(settings_filename)
         settings = schema_definitions.settings_schema.validate(settings)
         return settings
 
     def get_simulation_cell(self):
         """
-        Read information about the simulation cell from the specified YAML file.
-        Additional geometry is then calculated using routines from the `pymatgen` module.
-
-        :return simulation_cell: data from YAML file and additional geometry data
-        :rtype simulation_cell: dict
+        Read information about the simulation cell from the specified YAML file
+        Additional geometry is then calculated using routines from the `pymatgen` module
         """
-        simulation_cell = io.read_yaml(self.settings["simulation_cell_data"])
+        simulation_cell = io.read_yaml_or_dict(self.settings["simulation_cell"])
         simulation_cell = schema_definitions.simulation_cell_schema.validate(simulation_cell)
         lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
 
@@ -89,10 +75,8 @@ class Deposition:
         The instance must provide the following methods:
         - write_inputs(filename, coordinates, elements, velocities, iteration_stage)
         - read_outputs(filename)
-
-        :return driver:
         """
-        driver_settings = io.read_yaml(self.settings["driver_settings"])
+        driver_settings = io.read_yaml_or_dict(self.settings["driver_settings"])
         driver_name = driver_settings["name"].upper()
         if driver_name == "GULP":
             from molecular_dynamics_drivers import GULPDriver
@@ -113,7 +97,7 @@ class Deposition:
     def read_status():
         """Reads information about the current state of the deposition simulation"""
         try:
-            status = io.read_yaml(Deposition.status_filename)
+            status = io.read_yaml_or_dict(Deposition.status_filename)
             iteration_number = int(status["iteration_number"])
             num_sequential_failures = int(status["num_sequential_failures"])
             pickle_location = status["pickle_location"]
@@ -134,10 +118,8 @@ class Deposition:
 
     def initial_setup(self):
         """
-        Sets up the initial state of simulation, creates required directories.
-        Only runs no "status.yaml" file is found (self.iteration_number is None).
-
-        :return:
+        Sets up the initial state of simulation, creates required directories
+        Only runs when no "status.yaml" file is found (self.iteration_number is None)
         """
         if self.iteration_number is None:
             self.iteration_number = 1

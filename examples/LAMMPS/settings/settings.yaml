@@ -1,8 +1,3 @@
-# paths to additional settings
-driver_settings: settings/lammps_settings.yaml
-simulation_cell_data: settings/simulation_cell.yaml
-substrate_xyz_file: settings/substrate.xyz
-
 # deposition settings (physics)
 deposition_type: monatomic
 deposition_element: O
@@ -18,3 +13,32 @@ num_deposited_per_iteration: 1
 maximum_total_iterations: 10
 maximum_sequential_failures: 5
 
+# paths to additional settings
+substrate_xyz_file: settings/substrate.xyz
+
+simulation_cell:
+  a: 8.08
+  b: 8.08
+  c: 200
+  alpha: 90
+  beta: 90
+  gamma: 90
+
+driver_settings:
+  # software data
+  name: LAMMPS
+  path_to_binary: /Users/martin/work/repos/lammps/src/lmp_serial
+  path_to_input_template: settings/lammps_input_template.txt
+  elements_in_potential: Al O
+  # potential information (order of elements and masses must match)
+  atomic_masses:
+    - 26.9815386
+    - 15.9994
+  # required conversions change depending on LAMMPS "units" command
+  velocity_scaling_from_metres_per_second: 0.00001  # convert to Angstroms/fs
+  timestep_scaling_from_picoseconds: 1000  # convert to femtoseconds
+  # extra values to replace in input template
+  potential_file: settings/Hong_and_van_Duin_2015_Al_O.reaxff
+  temperature_of_system_Kelvin: 300
+  molecular_dynamics_timestep: 1.0
+  write_data_every_n_steps: 10

@@ -32,12 +32,12 @@ def start_logging(log_filename):
 
 
 def make_directories(names):
-    """Creates directories from a list of names and warn user when directories already exist."""
+    """Creates directories from a list of names and sends warning instead of error when directories already exist"""
     for name in names:
         try:
             os.mkdir(name)
         except FileExistsError:
-            logging.warning(f"directory \"{name}\" already exist, check for existing data before proceeding.")
+            logging.warning(f"directory \"{name}\" already exists, check for existing data before proceeding")
 
 
 def throw_away_lines(iterator, n):
@@ -51,18 +51,16 @@ def throw_away_lines(iterator, n):
         next(itertools.islice(iterator, n, n), None)
 
 
-def read_yaml(filename):
-    """
-    Reads a YAML file to a Python dictionary object.
-
-    :param filename: path to a YAML file
-    :return: dict built from the data in YAML file
-    """
-    with open(filename) as file:
-        return yaml.safe_load(file)
+def read_yaml_or_dict(yaml_file_or_dict):
+    """Returns a dict or reads a YAML file to a dict."""
+    if type(yaml_file_or_dict) is dict:
+        return yaml_file_or_dict
+    elif type(yaml_file_or_dict) is str:
+        with open(yaml_file_or_dict) as file:
+            return yaml.safe_load(file)
 
 
-def write_yaml(filename, dictionary: dict):
+def write_yaml(filename, dictionary):
     """
     Writes a Python dictionary object to a YAML file.
 
@@ -96,7 +94,7 @@ def read_xyz(xyz_file, step=None):
     elif step == 1:
         num_lines_to_skip = 0
     else:
-        raise NotImplementedError("reading arbitrary step of XYZ file not implemented")
+        raise NotImplementedError("reading arbitrary step number of XYZ file not available")
 
     with open(xyz_file) as file:
         throw_away_lines(file, num_lines_to_skip)
