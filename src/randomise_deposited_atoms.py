@@ -21,7 +21,7 @@ def append_new_coordinates_and_velocities(settings, coordinates, elements, veloc
     for ii in range(num_deposited):
         if deposition_type == "monatomic":
             coordinates_new = random_monatomic_position(simulation_cell, new_z_position)
-            elements_new = list(deposition_element.name)
+            elements_new = [deposition_element.name for _ in range(1)]
             velocities_new = random_monatomic_velocity(gas_temperature, particle_mass, minimum_velocity)
         elif deposition_type == "diatomic":
             bond_length = float(settings["diatomic_bond_length_Angstroms"])
