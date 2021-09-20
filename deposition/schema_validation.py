@@ -59,9 +59,9 @@ def check_input_file_syntax(driver):
         template_keys.append(key.strip("{}"))
 
     for key in template_keys:
-        if key in get_driver_reserved_keywords(driver):  # ignore reserved keywords
+        if key in driver.settings.keys():  # a value has been provided
             continue
-        elif key in driver.settings.keys():  # a value has been provided
+        elif key in get_driver_reserved_keywords(driver):  # ignore reserved keywords
             continue
         elif key not in driver.settings.keys():  # unknown key
             raise SchemaError(f"unknown key '{key}' present in input template but has no set value")

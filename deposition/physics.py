@@ -1,5 +1,5 @@
 import math
-from src import maths
+from deposition import maths
 
 CONSTANTS = {
     "BoltzmannConstant": 1.380658e-23,  # Joules per Kelvin

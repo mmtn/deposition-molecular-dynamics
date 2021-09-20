@@ -1,7 +1,7 @@
 import os
 from schema import Schema, And, Or, Use, Optional
 
-from src.schema_validation import strictly_positive, allowed_deposition_type
+from deposition.schema_validation import strictly_positive, allowed_deposition_type
 
 """
 # settings.yaml
@@ -24,13 +24,14 @@ settings_schema = Schema({
     "driver_settings": Or(dict, os.path.exists),
     "simulation_cell": Or(dict, os.path.exists),
     "substrate_xyz_file": os.path.exists,
+    "log_filename": str,
     Optional("command_prefix", default=""): str,
     Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(strictly_positive)),
 })
 
 
 """
-# simulation_cell.yaml
+# Input schema for simulation cell parameters
 
 Defines the periodic cell. Lengths are in Angstroms. Angles are in degrees
 

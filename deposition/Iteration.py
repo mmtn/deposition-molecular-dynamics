@@ -3,8 +3,7 @@ import os
 import shutil
 import subprocess
 from string import Template
-
-from src import io, randomise_deposited_atoms, structural_analysis, Deposition
+from deposition import Deposition, io, randomise_deposited_atoms, structural_analysis
 
 
 class Iteration:
@@ -13,8 +12,8 @@ class Iteration:
         self.settings = settings
         self.iteration_number = iteration_number
         self.pickle_location = pickle_location
-        self.deposition_filename = f"{Deposition.Deposition.working_directory}/deposition{self.iteration_number:03d}"
-        self.relaxation_filename = f"{Deposition.Deposition.working_directory}/relaxation{self.iteration_number:03d}"
+        self.deposition_filename = f"{Deposition.working_dir}/deposition{self.iteration_number:03d}"
+        self.relaxation_filename = f"{Deposition.working_dir}/relaxation{self.iteration_number:03d}"
         self.success = False
 
     def run(self):
@@ -49,14 +48,14 @@ class Iteration:
 
     def finish(self):
         if not self.success:
-            destination_directory = f"{Deposition.Deposition.failure_directory}/{self.iteration_number:03d}/"
+            destination_directory = f"{Deposition.failure_dir}/{self.iteration_number:03d}/"
         else:
-            destination_directory = f"{Deposition.Deposition.success_directory}/{self.iteration_number:03d}/"
+            destination_directory = f"{Deposition.success_dir}/{self.iteration_number:03d}/"
             self.pickle_location = f"{destination_directory}/deposition{self.iteration_number:03d}.pickle"
         logging.info(f"moving data for iteration {self.iteration_number} to {destination_directory}")
-        shutil.copytree(Deposition.Deposition.working_directory, destination_directory)
-        shutil.rmtree(Deposition.Deposition.working_directory)
-        os.mkdir(Deposition.Deposition.working_directory)
+        shutil.copytree(Deposition.working_dir, destination_directory)
+        shutil.rmtree(Deposition.working_dir)
+        os.mkdir(Deposition.working_dir)
 
     def call_process(self, filename):
         command_template = Template(self.driver.command_syntax)

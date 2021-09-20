@@ -4,10 +4,10 @@ import logging
 import os
 import pickle
 import sys
-
-import yaml
 from string import Template
+import yaml
 import numpy as np
+from deposition import schema_definitions
 
 
 def start_logging(log_filename):
@@ -32,7 +32,7 @@ def start_logging(log_filename):
 
 
 def make_directories(names):
-    """Creates directories from a list of names and sends warning instead of error when directories already exist"""
+    """Creates directories from a list of names and logs warning instead of error when directories already exist"""
     for name in names:
         try:
             os.mkdir(name)
@@ -49,26 +49,6 @@ def throw_away_lines(iterator, n):
         collections.deque(iterator, maxlen=0)
     else:
         next(itertools.islice(iterator, n, n), None)
-
-
-def read_yaml_or_dict(yaml_file_or_dict):
-    """Returns a dict or reads a YAML file to a dict."""
-    if type(yaml_file_or_dict) is dict:
-        return yaml_file_or_dict
-    elif type(yaml_file_or_dict) is str:
-        with open(yaml_file_or_dict) as file:
-            return yaml.safe_load(file)
-
-
-def write_yaml(filename, dictionary):
-    """
-    Writes a Python dictionary object to a YAML file.
-
-    :param filename: path to new YAML file
-    :param dictionary: any python dict
-    """
-    with open(filename, "w") as file:
-        yaml.dump(dictionary, file)
 
 
 def read_xyz(xyz_file, step=None):
@@ -161,3 +141,11 @@ def write_state(coordinates, elements, velocities, pickle_location):
     }
     with open(pickle_location, "wb") as file:
         pickle.dump(data, file)
+
+
+def read_settings_from_file(settings_filename):
+    """Read and validate the YAML file containing simulation settings"""
+    with open(settings_filename) as file:
+        settings = yaml.safe_load(file)
+    settings = schema_definitions.settings_schema.validate(settings)
+    return settings

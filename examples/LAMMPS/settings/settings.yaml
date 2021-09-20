@@ -4,8 +4,6 @@ deposition_element: O
 deposition_height_Angstroms: 10
 deposition_temperature_Kelvin: 300
 minimum_deposition_velocity_metres_per_second: 25
-relaxation_time_picoseconds: 2.0
-deposition_time_picoseconds: 15.0
 
 # deposition settings (numeric)
 bonding_distance_cutoff_Angstroms: 4

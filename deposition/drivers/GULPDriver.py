@@ -1,9 +1,7 @@
 import os
-
 import numpy as np
 from schema import Schema, And, Or, Use, Optional
-
-from src import io, physics, schema_validation
+from deposition import io, physics, schema_validation
 
 
 class GULPDriver:
@@ -83,9 +81,9 @@ class GULPDriver:
         template_values = self.settings
 
         if iteration_stage == "relaxation":
-            template_values.update({"production_time_ps": self.settings["relaxation_time_ps"]})
+            template_values.update({"production_time_ps": self.settings["relaxation_time_picoseconds"]})
         elif iteration_stage == "deposition":
-            template_values.update({"production_time_ps": self.settings["deposition_time_ps"]})
+            template_values.update({"production_time_ps": self.settings["deposition_time_picoseconds"]})
 
         template_values.update({"filename": filename})
         template_values.update({"thermostat_damping": thermostat_damping})

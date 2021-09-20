@@ -1,11 +1,9 @@
 import os
-
 import numpy as np
 import pandas as pd
 from pymatgen.io.lammps.data import LammpsData
 from schema import Schema, And, Or, Use, Optional
-
-from src import io, schema_validation
+from deposition import io, schema_validation
 
 
 class LAMMPSDriver:

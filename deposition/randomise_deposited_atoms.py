@@ -1,9 +1,7 @@
 import logging
-
 import numpy as np
 from pymatgen.core.periodic_table import Element
-
-from src import maths, physics, structural_analysis
+from deposition import maths, physics, structural_analysis
 
 
 def append_new_coordinates_and_velocities(settings, coordinates, elements, velocities, simulation_cell, velocity_scaling):
