@@ -13,3 +13,7 @@ venv/
 
 # Testing scripts
 *test*.py
+
+# Sphinx doc output
+docs/html
+docs/latex
