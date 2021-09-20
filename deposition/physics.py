@@ -7,22 +7,26 @@ CONSTANTS = {
 }
 
 
-def get_canonical_variance(num_atoms, temperature=300.0):
+def get_canonical_variance(num_atoms: int, temperature: float = 300.0) -> float:
     """
-    Uses Equation 6 from Holian et al. DOI: 10.1103/PhysRevE.52.2338
+    The dependence of the temperature variance in the Nose-Hoover thermostat on the number of atoms and the temperature
+    of the system has been studied by `Holian et al.`_ This function implements Equation 6
+    from this paper.
+
+    .. _Holian et al.: https://www.doi.org/10.1103/PhysRevE.52.2338
 
     :param num_atoms: the number of atoms in the simulation
     :param temperature: temperature of the simulation in Kelvin
-    :return canonical_variance: the expected variance for N particles
+    :return: canonical_variance: the expected variance for N particles
     """
     num_dimensions = 3.0
     canonical_variance = (2 * pow(temperature, 2)) / (num_dimensions * num_atoms)
     return canonical_variance
 
 
-def velocity_from_normal_distribution(gas_temperature, particle_mass, mean=0):
+def velocity_from_normal_distribution(gas_temperature: float, particle_mass: float, mean: float = 0) -> float:
     """
-    Return a velocity in metres per second randomly selected from a normal distribution."
+    Return a velocity in metres per second randomly selected from a normal distribution.
 
     :param gas_temperature: temperature of the ideal gas in Kelvin
     :param particle_mass: mass of the particle in kg

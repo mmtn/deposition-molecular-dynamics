@@ -5,10 +5,10 @@ from deposition import Iteration, io, utils
 
 
 class Deposition:
-    status_filename = "status.yaml"
-    working_dir = "current"
-    success_dir = "iterations"
-    failure_dir = "failed"
+    _status_filename = "status.yaml"
+    _working_dir = "current"
+    _success_dir = "iterations"
+    _failure_dir = "failed"
 
     def __init__(self, settings: dict):
         self.settings = settings
@@ -24,8 +24,8 @@ class Deposition:
 
     def initial_setup(self):
         """
-        Sets up the initial state of simulation, creates required directories
-        Only runs when no "status.yaml" file is found (self.iteration_number is None)
+        Sets up the initial state of simulation and creates the required directories.
+        Note that this function only runs when no status.yaml file is found (self.iteration_number is None).
         """
         if self.iteration_number is None:
             self.iteration_number = 1
@@ -33,7 +33,7 @@ class Deposition:
             self.pickle_location = "initial_positions.pickle"
             coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
             io.write_state(coordinates, elements, velocities=None, pickle_location=self.pickle_location)
-            io.make_directories((Deposition.working_dir, Deposition.success_dir, Deposition.failure_dir))
+            io.make_directories((Deposition._working_dir, Deposition._success_dir, Deposition._failure_dir))
             self.write_status()
 
     def run(self):
@@ -42,7 +42,7 @@ class Deposition:
         max_failures = self.settings["maximum_sequential_failures"]
 
         while (self.iteration_number <= max_iterations) and (self.num_sequential_failures <= max_failures):
-            iteration = Iteration.Iteration(self.driver, self.settings, self.iteration_number, self.pickle_location)
+            iteration = Iteration(self.driver, self.settings, self.iteration_number, self.pickle_location)
             success, self.pickle_location = iteration.run()
             if success:
                 self.num_sequential_failures = 0
@@ -55,9 +55,12 @@ class Deposition:
 
     @staticmethod
     def read_status():
-        """Reads information about the current state of the deposition simulation"""
+        """
+        Reads the current iteration number, number of sequential failures, and the most recent saved state of the
+        deposition simulation from status.yaml.
+        """
         try:
-            with open(Deposition.status_filename) as file:
+            with open(Deposition._status_filename) as file:
                 status = yaml.safe_load(file)
             iteration_number = int(status["iteration_number"])
             num_sequential_failures = int(status["num_sequential_failures"])
@@ -68,12 +71,15 @@ class Deposition:
             return None, None, None
 
     def write_status(self):
-        """Writes information about the current state of the deposition simulation"""
+        """
+        Writes the current time, current iteration number, number of sequential failures, and the most recent saved
+        state of the deposition simulation to status.yaml.
+        """
         status = {
             "last_updated": dt.now(),
             "iteration_number": self.iteration_number,
             "num_sequential_failures": self.num_sequential_failures,
             "pickle_location": self.pickle_location
         }
-        with open(Deposition.status_filename, "w") as file:
+        with open(Deposition._status_filename, "w") as file:
             yaml.dump(status, file)

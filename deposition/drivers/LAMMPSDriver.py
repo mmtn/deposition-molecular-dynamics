@@ -7,6 +7,10 @@ from deposition import io, schema_validation
 
 
 class LAMMPSDriver:
+    """
+    What happens when I put a string here
+    """
+
     name = "LAMMPS"
     command_syntax = "${prefix} ${binary} -in ${input_file} > ${output_file}"
     schema_dictionary = {
@@ -28,6 +32,16 @@ class LAMMPSDriver:
         self.binary = self.settings["path_to_binary"]
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
+        """
+        Write a set of LAMMPS input files to run the next iteration of the deposition calculation. Uses settings
+        from the Deposition object.
+
+        :param filename: name to use for input files
+        :param coordinates: numpy array of coordinate data
+        :param elements: list of atomic species data
+        :param velocities: numpy array of velocity data
+        :param iteration_stage: either "relaxation" or "deposition"
+        """
         input_filename = f"{filename}.input"
         input_data_filename = f"{filename}.input_data"
 
@@ -88,6 +102,12 @@ class LAMMPSDriver:
 
     @staticmethod
     def read_outputs(filename):
+        """
+        Read LAMMPS simulation data from output files
+
+        :param filename: name to use for output files
+        :return: atomic coordinates, elements, and velocities as read from the file
+        """
         data = LammpsData.from_file(f"{filename}.output_data", atom_style="charge")
         coordinates = data.atoms[["x", "y", "z"]].to_numpy()
         elements = data.atoms["type"].to_list()
