@@ -1,6 +1,8 @@
 import logging
+
 import numpy as np
 from pymatgen.core.periodic_table import Element
+
 from deposition import maths, physics, structural_analysis
 
 

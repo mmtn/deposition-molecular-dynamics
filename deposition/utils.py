@@ -1,13 +1,16 @@
 import logging
+
 import numpy as np
-from pymatgen.io.lammps.data import lattice_2_lmpbox
 from pymatgen.core.lattice import Lattice
+from pymatgen.io.lammps.data import lattice_2_lmpbox
+
 from deposition import schema_definitions, schema_validation
+from .drivers import GULPDriver, LAMMPSDriver
 
 
 def get_simulation_cell(simulation_cell):
     """
-    Read information about the simulation cell from the specified YAML file
+    Read information about the simulation cell from the specified YAML file.
     Additional geometry is then calculated using routines from the `pymatgen` module
     """
     simulation_cell = schema_definitions.simulation_cell_schema.validate(simulation_cell)
@@ -57,10 +60,8 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
     """
     driver_name = driver_settings["name"].upper()
     if driver_name == "GULP":
-        from .drivers import GULPDriver
         driver = GULPDriver(driver_settings, simulation_cell)
     elif driver_name == "LAMMPS":
-        from .drivers import LAMMPSDriver
         driver = LAMMPSDriver(driver_settings, simulation_cell)
     else:
         raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")

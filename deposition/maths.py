@@ -1,5 +1,5 @@
 import numpy as np
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point, Polygon
 
 
 def get_random_point_in_polygon(polygon_coordinates):

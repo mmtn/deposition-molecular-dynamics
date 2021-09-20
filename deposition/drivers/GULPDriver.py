@@ -1,6 +1,8 @@
 import os
+
 import numpy as np
-from schema import Schema, And, Or, Use, Optional
+from schema import And, Optional, Or, Schema, Use
+
 from deposition import io, physics, schema_validation
 
 

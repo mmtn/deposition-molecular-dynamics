@@ -5,8 +5,10 @@ import os
 import pickle
 import sys
 from string import Template
-import yaml
+
 import numpy as np
+import yaml
+
 from deposition import schema_definitions
 
 

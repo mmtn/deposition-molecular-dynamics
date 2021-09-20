@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 from string import Template
+
 from deposition import Deposition, io, randomisation, structural_analysis
 
 

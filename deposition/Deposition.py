@@ -1,6 +1,8 @@
 import logging
-import yaml
 from datetime import datetime as dt
+
+import yaml
+
 from deposition import Iteration, io, utils
 
 

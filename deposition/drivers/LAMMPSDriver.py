@@ -1,8 +1,10 @@
 import os
+
 import numpy as np
 import pandas as pd
 from pymatgen.io.lammps.data import LammpsData
-from schema import Schema, And, Or, Use, Optional
+from schema import And, Optional, Or, Schema, Use
+
 from deposition import io, schema_validation
 
 

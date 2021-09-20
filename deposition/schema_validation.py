@@ -1,7 +1,7 @@
 import logging
 import re
-from schema import Schema, SchemaError, Use, Optional
 
+from schema import Optional, Schema, SchemaError, Use
 
 ALLOWED_DEPOSITION_TYPES = [
     "monatomic",

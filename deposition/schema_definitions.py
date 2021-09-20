@@ -1,7 +1,8 @@
 import os
-from schema import Schema, And, Or, Use, Optional
 
-from deposition.schema_validation import strictly_positive, allowed_deposition_type
+from schema import And, Optional, Or, Schema, Use
+
+from deposition.schema_validation import allowed_deposition_type, strictly_positive
 
 settings_schema = Schema({
     "deposition_type": And(str, Use(allowed_deposition_type)),
