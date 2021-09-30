@@ -7,7 +7,7 @@ from deposition import Iteration, io, utils
 
 
 class Deposition:
-    _status_filename = "status.yaml"
+    _status_file = "status.yaml"
     _working_dir = "current"
     _success_dir = "iterations"
     _failure_dir = "failed"
@@ -62,7 +62,7 @@ class Deposition:
         deposition simulation from status.yaml.
         """
         try:
-            with open(Deposition._status_filename) as file:
+            with open(Deposition._status_file) as file:
                 status = yaml.safe_load(file)
             iteration_number = int(status["iteration_number"])
             num_sequential_failures = int(status["num_sequential_failures"])
@@ -83,5 +83,5 @@ class Deposition:
             "num_sequential_failures": self.num_sequential_failures,
             "pickle_location": self.pickle_location
         }
-        with open(Deposition._status_filename, "w") as file:
+        with open(Deposition._status_file, "w") as file:
             yaml.dump(status, file)

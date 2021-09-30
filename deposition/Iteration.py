@@ -86,7 +86,7 @@ class Iteration:
 
         :param filename: name used to label this phase of this iteration
         """
-        command_template = Template(self.driver.command_syntax)
+        command_template = Template(self.driver.command)
         command_template_values = dict()
         command_template_values["prefix"] = self.settings["command_prefix"]
         command_template_values["binary"] = self.driver.binary
