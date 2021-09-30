@@ -13,7 +13,7 @@ def get_simulation_cell(simulation_cell):
     Read information about the simulation cell from the specified YAML file.
     Additional geometry is then calculated using routines from the `pymatgen` module
     """
-    simulation_cell = schema_definitions.simulation_cell_schema.validate(simulation_cell)
+    simulation_cell = schema_definitions.simulation_cell_schema().validate(simulation_cell)
     lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
 
     if lammps_box.tilt is None:

@@ -149,5 +149,5 @@ def read_settings_from_file(settings_filename):
     """Read and validate the YAML file containing simulation settings"""
     with open(settings_filename) as file:
         settings = yaml.safe_load(file)
-    settings = schema_definitions.settings_schema.validate(settings)
+    settings = schema_definitions.settings_schema().validate(settings)
     return settings
