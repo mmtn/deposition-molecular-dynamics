@@ -15,11 +15,16 @@ sys.path.insert(0, os.path.abspath('../deposition/drivers'))
 project = 'Deposition'
 copyright = '2021, M. J. Cyster'
 author = 'M. J. Cyster'
-release = '0.02'
+release = '1.0.0-alpha'
 
 # -- General configuration ---------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+]
 templates_path = ['_templates']
 exclude_patterns = []
 autodoc_member_order = 'bysource'
@@ -27,4 +32,9 @@ autodoc_member_order = 'bysource'
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = 'haiku'
-html_static_path = ['_static']
+
+# html_theme_options = {
+#     "rightsidebar": "false",
+# }
+
+# html_static_path = ['_static']

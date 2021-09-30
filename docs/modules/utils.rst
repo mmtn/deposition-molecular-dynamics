@@ -1,7 +1,7 @@
 .. _module_utils:
 
-Utility functions
------------------
+deposition.utils - utility functions
+------------------------------------
 
 .. automodule:: deposition.utils
     :members:

@@ -1,7 +1,7 @@
 .. _module_randomisation:
 
-Randomisation routines
-----------------------
+deposition.randomisation - routines to randomise positions and velocities
+-------------------------------------------------------------------------
 
 .. automodule:: deposition.randomisation
     :members:

@@ -1,7 +1,7 @@
 .. _module_structural_analysis:
 
-Structural analysis
--------------------
+deposition.structural_analysis - used to check ongoing simulations
+------------------------------------------------------------------
 
 .. automodule:: deposition.structural_analysis
     :members:

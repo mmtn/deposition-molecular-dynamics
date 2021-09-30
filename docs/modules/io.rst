@@ -1,7 +1,7 @@
 .. _module_io:
 
-Functions and utilities for file system IO
-------------------------------------------
+deposition.io - functions and utilities for file system IO
+----------------------------------------------------------
 
 .. automodule:: deposition.io
     :members:

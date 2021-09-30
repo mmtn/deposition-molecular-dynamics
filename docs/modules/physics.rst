@@ -1,7 +1,7 @@
 .. _module_physics:
 
-Physics helper functions
-------------------------
+deposition.physics - physics helper functions
+---------------------------------------------
 
 .. automodule:: deposition.physics
     :members:

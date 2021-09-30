@@ -1,7 +1,7 @@
 .. _module_maths:
 
-Mathematical helper functions
------------------------------
+deposition.maths - mathematical helper functions
+------------------------------------------------
 
 .. automodule:: deposition.maths
     :members:
