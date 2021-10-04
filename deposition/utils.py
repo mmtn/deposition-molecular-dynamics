@@ -1,11 +1,11 @@
+import importlib
 import logging
 
 import numpy as np
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
-from deposition import schema_definitions, schema_validation
-from .drivers import GULPDriver, LAMMPSDriver
+from deposition import drivers, schema_definitions, schema_validation
 
 
 def get_simulation_cell(simulation_cell):
@@ -70,14 +70,28 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
     Returns:
         driver (MolecularDynamicsDriver): driver object
     """
-    driver_name = driver_settings["name"].upper()
-    if driver_name == "GULP":
-        driver = GULPDriver(driver_settings, simulation_cell)
-    elif driver_name == "LAMMPS":
-        driver = LAMMPSDriver(driver_settings, simulation_cell)
-    else:
-        raise NotImplementedError(f"specified MD driver \'{driver_settings['name']}\' not found")
-    logging.info(f"Using {driver_name} for molecular dynamics")
+    driver = None
+    chosen_driver = driver_settings["name"]
+
+    available_drivers = [driver for driver in dir(drivers) if driver.startswith("_") is False]
+    for driver_name in available_drivers:
+        test_driver = importlib.import_module(f"deposition.drivers.{driver_name}")
+        for driver_attr in dir(test_driver):
+            class_attr = getattr(test_driver, driver_attr)
+            if hasattr(class_attr, "__name__") and hasattr(class_attr, "name") and class_attr.__name__ == driver_name:
+                assert callable(class_attr.write_inputs), "driver class must provided write_inputs method"
+                assert callable(class_attr.read_outputs), "driver class must provided read_outputs method"
+                if class_attr.name.upper() == chosen_driver.upper():
+                    driver = eval(
+                        f"drivers.{driver_name}(driver_settings, simulation_cell)",
+                        {"__builtins__": {"drivers": drivers}},
+                        {"driver_settings": driver_settings, "simulation_cell": simulation_cell}
+                    )
+                    logging.info(f"Using driver {driver_name} for {chosen_driver}")
+
+    if driver is None:
+        raise ValueError(f"no driver with the name '{chosen_driver}' was found")
+
     schema_validation.add_globally_reserved_keywords(driver)
     schema_validation.check_input_file_syntax(driver)
     driver.settings.update({"deposition_time_picoseconds": deposition_time_picoseconds})

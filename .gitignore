@@ -11,9 +11,5 @@ venv/
 # Mac nonsense
 **.DS_Store
 
-# Testing scripts
-*test*.py
-
 # Sphinx doc output
-docs/html
-docs/latex
+html-docs
