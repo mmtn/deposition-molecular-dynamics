@@ -11,7 +11,7 @@ def settings_schema():
     deposition to be simulated.
 
     Note that settings for the :meth:`simulation cell <deposition.schema_definitions.simulation_cell_schema>` and
-    molecular dynamics :doc:`driver <drivers>` must also be provided.
+    molecular dynamics :ref:`driver <drivers>` must also be provided.
 
     List of settings:
 

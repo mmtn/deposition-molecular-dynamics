@@ -1,19 +1,24 @@
 import os
 
 import numpy as np
-from schema import And, Optional, Or, Schema, Use
+from schema import Optional, Use
 
 from deposition import io, physics, schema_validation
+from deposition.drivers.MolecularDynamicsDriver import MolecularDynamicsDriver
 
 
-class GULPDriver:
+class GULPDriver(MolecularDynamicsDriver):
+    """
+    Class to interface between deposition package and GULP software
+
+    GULPDriver defines input variables required for the driver functions to work, as well as how to call GULP on the
+    command line, write GULP input files, and read GULP output files. The `schema_dictionary` defines additional
+    inputs which are required when using the GULP driver.
+    """
     name = "GULP"
-    command_syntax = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    """String matched against input settings when initialising the driver."""
+
     schema_dictionary = {
-        "name": str,
-        "path_to_binary": os.path.exists,
-        "path_to_input_template": os.path.exists,
-        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
         "GULP_LIB": os.path.exists,
         Optional("production_time_picoseconds"): Use(schema_validation.reserved_keyword),
         Optional("thermostat_damping"): Use(schema_validation.reserved_keyword),
@@ -23,50 +28,85 @@ class GULPDriver:
         Optional("alpha"): Use(schema_validation.reserved_keyword),
         Optional("beta"): Use(schema_validation.reserved_keyword),
         Optional("gamma"): Use(schema_validation.reserved_keyword),
-        str: Or(int, float, str),  # this line ensures that unlisted keys are retained after validation
     }
-    schema = Schema(schema_dictionary, ignore_extra_keys=True)
+    """
+        The names and types of additional inputs for GULP:
+
+        - GULP_LIB (path): location of GULP library folder containing provided potentials 
+        - production_time_picoseconds (int or float): used in template for duration of simulation
+        - x_size (float): used in template to specify simulation cell
+        - y_size (float): used in template to specify simulation cell
+        - z_size (float): used in template to specify simulation cell
+        - alpha (float): used in template to specify simulation cell
+        - beta (float): used in template to specify simulation cell
+        - gamma (float): used in template to specify simulation cell
+    """
 
     def __init__(self, driver_settings, simulation_cell):
-        self.settings = GULPDriver.schema.validate(driver_settings)
-        self.simulation_cell = simulation_cell
-        self.binary = self.settings["path_to_binary"]
+        super().__init__(driver_settings, simulation_cell, self.schema_dictionary)
         self.set_environment_variables()
 
     def set_environment_variables(self):
+        """
+        Uses the user provided value for GULP_LIB to set the environment variable. This is essential to use the
+        potentials which ship with GULP.
+        """
         os.putenv("GULP_LIB", self.settings["GULP_LIB"])
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
+        """
+        Write GULP input file for the next part of the deposition calculation.
+
+        Arguments:
+            filename (str): name to use for input files
+            coordinates (np.array): coordinate data
+            elements (list): atomic species data
+            velocities (np.array): velocity data
+            iteration_stage (str): either "relaxation" or "deposition"
+        """
         def write_positions(filename, coordinates, elements):
+            """
+            Write positional data to the GULP input file
+
+            Arguments:
+                filename (str): name to use for input files
+                coordinates (np.array): coordinate data
+                elements (list): atomic species data
+            """
             with open(filename, "a") as file:
                 file.write("cartesian\n")
                 for atom, xyz in zip(elements, coordinates):
                     file.write(f"{atom} {xyz[0]} {xyz[1]}, {xyz[2]}\n")
 
         def write_velocities(filename, velocities):
+            """
+            Write positional data to the GULP input file
+
+            Arguments:
+                filename (str): name to use for input files
+                velocities (np.array): velocity data
+            """
             with open(filename, "a") as file:
                 file.write("velocities\n")
                 for ii, v in enumerate(velocities):
                     file.write(f"{ii} {v[0]} {v[1]} {v[2]}\n")
 
-        def get_thermostat_damping(num_atoms, temperature=300.0):
-            """
-            Calculate the required Nose-Hoover coupling constant which should give rise to canonical
-            temperature fluctuations throughout the simulation. The number is derived from a fitted power
-            law equation.
-
-            :param num_atoms: the number of atoms in the simulation
-            :param temperature: temperature of the simulation in Kelvin
-            :return nose_hoover: the coupling constant required to give the canonical variance in the simulation
-            """
-            minimum_nose_hoover_parameter = 0.0001
-            a = 610.0
-            b = -49.6
-            canonical_variance = physics.get_canonical_variance(num_atoms, temperature)
-            nose_hoover = (np.log(canonical_variance) - np.log(a)) / b
-            return max(round(nose_hoover, 6), minimum_nose_hoover_parameter)
-
         def parameters_from_simulation_cell(simulation_cell):
+            """
+            Get GULP friendly specification of the simulation cell from the dict
+
+            Arguments:
+                simulation_cell (dict): specification of the size and shape of the simulation cell
+
+            Returns:
+                simulation_cell (tuple):
+                    - x_size
+                    - y_size
+                    - z_size
+                    - alpha
+                    - beta
+                    - gamma
+            """
             x_size = simulation_cell["x_max"] - simulation_cell["x_min"]
             y_size = simulation_cell["y_max"] - simulation_cell["y_min"]
             z_size = simulation_cell["z_max"] - simulation_cell["z_min"]
@@ -77,7 +117,7 @@ class GULPDriver:
 
         input_filename = f"{filename}.input"
 
-        thermostat_damping = get_thermostat_damping(len(elements), self.settings["temperature_of_system"])
+        thermostat_damping = self.get_thermostat_damping(len(elements), self.settings["temperature_of_system"])
         x_size, y_size, z_size, alpha, beta, gamma = parameters_from_simulation_cell(self.simulation_cell)
 
         template_values = self.settings
@@ -102,8 +142,52 @@ class GULPDriver:
             write_velocities(input_filename, velocities)
 
     @staticmethod
+    def get_thermostat_damping(num_atoms, temperature=300.0):
+        """
+        Calculate the required Nose-Hoover coupling constant which should give rise to canonical
+        temperature fluctuations throughout the simulation. The number is derived from a fitted power
+        law equation. See Section 2.4.1 in my `thesis`_.
+
+        Arguments:
+            num_atoms (int): the number of atoms in the simulation
+            temperature (float): temperature of the simulation in Kelvin
+
+        Returns:
+            nose_hoover (float): the coupling constant required to give the canonical variance in the simulation
+
+        .. _thesis: https://researchrepository.rmit.edu.au/discovery/delivery/61RMIT_INST:RMITU/12247670720001341
+        """
+        minimum_nose_hoover_parameter = 0.0001
+        a = 610.0
+        b = -49.6
+        canonical_variance = physics.get_canonical_variance(num_atoms, temperature)
+        nose_hoover = (np.log(canonical_variance) - np.log(a)) / b
+        return max(round(nose_hoover, 6), minimum_nose_hoover_parameter)
+
+    @staticmethod
     def read_outputs(filename):
+        """
+        Read simulation data from GULP output files and return coordinate, element, and velocity data.
+
+        Arguments:
+            filename (str): basename to use for reading output files
+
+        Returns:
+            coordinates, elements, velocities (tuple)
+                - coordinates (np.array): coordinate data
+                - elements (list): atomic species data
+                - velocities (np.array): velocity data
+        """
         def get_data_types(trajectory_file):
+            """
+            Assess the type of data contained in the trajectory file.
+
+            Arguments:
+                trajectory_file (path): GULP trajectory (.trj) file containing position, velocity, and other data
+
+            Returns:
+                list_of_data_types (list): types of data in the file, e.g. Coordinates, Velocities, Charges, etc.
+            """
             list_of_data_types = list()
             with open(trajectory_file) as file:
                 for line in file:
@@ -116,6 +200,17 @@ class GULPDriver:
             return list_of_data_types
 
         def get_data_from_trajectory_file(trajectory_file, data_type, step_number=None):
+            """
+            Read data from the trajectory file.
+
+            Arguments:
+                trajectory_file (path): GULP trajectory (.trj) file containing position, velocity, and other data
+                data_type (str): type of data to read, e.g. Coordinates, Velocities, Charges, etc.
+                step_number (int or None): which step of the file to read from
+
+            Returns:
+                data (np.array): data read from the file of the given type at the given step
+            """
             available_types = get_data_types(trajectory_file)
             if data_type not in available_types:
                 raise ValueError(f"data type {data_type} not present")

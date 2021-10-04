@@ -6,10 +6,10 @@ A Python wrapper for simulating deposition processes with molecular dynamics.
 Todo
 ----
 
-- improve and document `GULPDriver`, inherit from `MolecularDynamicsDriver`
 - add additional information to the page about writing new drivers
-- ensure consistency across all doc strings
-- ensure good coverage of docs
+- check structural analysis routines for bugs
+- improve analysis for reflected deposition events
+- allow deposition of molecules (structure specified by an XYZ file maybe?)
 
 Requirements
 ------------
@@ -30,7 +30,9 @@ Build the documentation::
 
     sphinx-build -b html docs html-docs
 
-This can then be accessed by opening `html-docs/index.html` in your browser.
+This can then be accessed by opening `html-docs/index.html` in your browser. Sphinx can also build the documentation in
+plain text, as a PDF using LaTeX, or in other ways. Various builders are listed
+`here <https://www.sphinx-doc.org/en/master/usage/builders/index.html>`_
 
 Structure of the code
 ---------------------
@@ -63,8 +65,8 @@ exceeded.
 
 .. note::
 
-    To run the software in parallel you can specify a `command_prefix` in the settings such as `mpiexec`. This will be
-    prepended to each call to the software by subprocess.
+    To run the software in parallel you can specify a `command_prefix` in the settings such as "`mpiexec`". This will be
+    prepended to the command for every molecular dynamics simulation.
 
 
 Usage

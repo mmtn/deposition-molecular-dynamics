@@ -4,12 +4,12 @@ import shutil
 import subprocess
 from string import Template
 
-from deposition import Deposition, io, randomisation, structural_analysis
+
+from deposition import io, randomisation, structural_analysis
 
 
 class Iteration:
     """
-
     The `Iteration` class represents one cycle of relaxing the system before depositing an atom/molecule as specified
     by the input settings. Each iteration consists of the following steps:
 
@@ -25,8 +25,8 @@ class Iteration:
         self.settings = settings
         self.iteration_number = iteration_number
         self.pickle_location = pickle_location
-        self.deposition_filename = f"{Deposition._working_dir}/deposition{self.iteration_number:03d}"
-        self.relaxation_filename = f"{Deposition._working_dir}/relaxation{self.iteration_number:03d}"
+        self.deposition_filename = f"{settings['working_dir']}/deposition{self.iteration_number:03d}"
+        self.relaxation_filename = f"{settings['working_dir']}/relaxation{self.iteration_number:03d}"
         self.success = False
 
     def run(self):
@@ -71,14 +71,14 @@ class Iteration:
         coordinates, elements, _ = io.read_state(f"{self.deposition_filename}.pickle")
         self.check_outcome(coordinates, elements)
         if not self.success:
-            destination_directory = f"{Deposition._failure_dir}/{self.iteration_number:03d}/"
+            destination_directory = f"{self.settings['failure_dir']}/{self.iteration_number:03d}/"
         else:
-            destination_directory = f"{Deposition._success_dir}/{self.iteration_number:03d}/"
+            destination_directory = f"{self.settings['success_dir']}/{self.iteration_number:03d}/"
             self.pickle_location = f"{destination_directory}/deposition{self.iteration_number:03d}.pickle"
         logging.info(f"moving data for iteration {self.iteration_number} to {destination_directory}")
-        shutil.copytree(Deposition._working_dir, destination_directory)
-        shutil.rmtree(Deposition._working_dir)
-        os.mkdir(Deposition._working_dir)
+        shutil.copytree(self.settings['working_dir'], destination_directory)
+        shutil.rmtree(self.settings['working_dir'])
+        os.mkdir(self.settings['working_dir'])
 
     def call_process(self, filename):
         """
@@ -108,9 +108,16 @@ class Iteration:
         """
         logging.info("running structural analysis to check outcome")
         try:
-            structural_analysis.check_min_neighbours(self.settings, self.driver.simulation_cell, coordinates)
-            structural_analysis.check_bonding_at_lower_interface(self.settings, self.driver.simulation_cell,
-                                                                 coordinates, elements)
+            structural_analysis.check_min_neighbours(
+                self.driver.simulation_cell, coordinates,
+                self.settings["deposition_type"],
+                self.settings["bonding_distance_cutoff_Angstroms"]
+            )
+            structural_analysis.check_bonding_at_image(
+                self.driver.simulation_cell, coordinates, elements,
+                self.settings["deposition_element"],
+                self.settings["bonding_distance_cutoff_Angstroms"]
+            )
             self.success = True
         except RuntimeWarning as warning:
             logging.warning(warning)

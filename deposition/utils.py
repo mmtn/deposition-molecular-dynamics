@@ -10,8 +10,14 @@ from .drivers import GULPDriver, LAMMPSDriver
 
 def get_simulation_cell(simulation_cell):
     """
-    Read information about the simulation cell from the specified YAML file.
-    Additional geometry is then calculated using routines from the `pymatgen` module
+    Additional geometry of the simulation cell is calculated using routines from the `pymatgen` module including bounds
+    specification for use with LAMMPS and the cell vectors.
+
+    Arguments:
+        simulation_cell (dict): simulation cell settings (see
+                                :meth:`format <deposition.schema_definitions.simulation_cell_schema>`).
+    Return:
+        simulation_cell (dict): updated simulation cell with added keys for additional geometry
     """
     simulation_cell = schema_definitions.simulation_cell_schema().validate(simulation_cell)
     lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
@@ -52,11 +58,17 @@ def get_simulation_cell(simulation_cell):
 def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_time_picoseconds,
                                   relaxation_time_picoseconds):
     """
-    Initialise an instance of the driver for the specified molecular dynamics software
+    Initialises one of the available molecular dynamics drivers. For more information about drivers see
+    :ref:`here <drivers>`.
 
-    The instance must provide the following methods:
-    - write_inputs(filename, coordinates, elements, velocities, iteration_stage)
-    - read_outputs(filename)
+    Arguments:
+        driver_settings (dict): settings for the specified driver, the `name` key chooses which driver is loaded
+        simulation_cell (dict): specifies the size and shape of the simulation cell
+        deposition_time_picoseconds (int or float): amount of time to run the deposition stage of each iteration
+        relaxation_time_picoseconds (int or float): amount of time to run the relaxation stage of each iteration
+
+    Returns:
+        driver (MolecularDynamicsDriver): driver object
     """
     driver_name = driver_settings["name"].upper()
     if driver_name == "GULP":

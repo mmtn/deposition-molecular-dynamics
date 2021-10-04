@@ -22,9 +22,13 @@ release = '1.0.0-alpha'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
 ]
+
+napoleon_include_init_with_doc = True
+
 templates_path = ['_templates']
 exclude_patterns = []
 autodoc_member_order = 'bysource'

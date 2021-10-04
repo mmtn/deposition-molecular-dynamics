@@ -16,7 +16,8 @@ def start_logging(log_filename):
     """
     Starts logging to both stdout and given filename
 
-    :param log_filename: path to write the log file
+    Arguments:
+        log_filename (path): where to write the log file
     """
     logger = logging.getLogger('')
     logger.setLevel(logging.INFO)
@@ -33,9 +34,14 @@ def start_logging(log_filename):
     logging.info(f"logging to {log_filename} and stdout")
 
 
-def make_directories(names):
-    """Creates directories from a list of names and logs warning instead of error when directories already exist"""
-    for name in names:
+def make_directories(directory_names):
+    """
+    Creates directories from a list of names and logs warning instead of error when directories already exist.
+
+    Arguments:
+        directory_names (tuple): list of directory names to be created
+    """
+    for name in directory_names:
         try:
             os.mkdir(name)
         except FileExistsError:
@@ -44,8 +50,11 @@ def make_directories(names):
 
 def throw_away_lines(iterator, n):
     """
-    Fast way to throw away lines of data we don't need.
-    Advance the iterator n-steps ahead. If n is none, consume entirely.
+    A fast way to throw away data we don't need. Advance the iterator n-steps ahead. If n is None, consume entirely.
+
+    Arguments:
+        iterator (path/iterable object): open file or other iterable object which handles the next() method
+        n (int): the number of lines/iterations to discard
     """
     if n is None:
         collections.deque(iterator, maxlen=0)
@@ -57,11 +66,15 @@ def read_xyz(xyz_file, step=None):
     """
     Reads data from either the first or last step of an XYZ file.
 
-    :param xyz_file: path to XYZ file
-    :param step: (default=None) reads last step when equal to None, first step when equal to 1
-    :return coordinates: Nx3 numpy array for N atoms
-    :return elements: Nx1 list of strings for N atoms
-    :return num_atoms: int, the number of atoms (N)
+    Arguments:
+        xyz_file (path): path to XYZ file
+        step (default=None): reads the final step when equal to None, first step when equal to 1
+
+    Returns:
+        coordinates, elements, velocities (tuple)
+            - coordinates (np.array): coordinate data
+            - elements (list of str): atomic species data
+            - velocities (np.array): velocity data
     """
     # Get the number of lines in the file and the number of atoms
     header_lines_per_step = 2
@@ -90,18 +103,18 @@ def read_xyz(xyz_file, step=None):
     return coordinates, elements, num_atoms
 
 
-def write_file_using_template(output_filename, template_filename, dictionary):
+def write_file_using_template(output_filename, template_filename, template_values):
     """
-    Generic function for using the stdlib template module to perform find and replace
+    Uses the stdlib template module to perform find and replace in the provided template and write a new file.
 
-    :param output_filename: path of file to write
-    :param template_filename: path to plain text template
-    :param dictionary: dict with key/value pairs used for find and replace
+    Arguments:
+        output_filename (path): path to new file written with the template fields replaced
+        template_filename (path): path to template with replaceable fields
+        template_values (dict): key/value pairs used for find and replace in the template
     """
     with open(template_filename) as file:
         template = Template(file.read())
-        result = template.substitute(dictionary)
-
+        result = template.substitute(template_values)
     with open(output_filename, "w") as file:
         file.write(result)
 
@@ -111,10 +124,14 @@ def read_state(pickle_location):
     Reads current state of calculation from pickle file. The pickle file stores the coordinates, species (elements),
     and velocities of all simulated atoms.
 
-    :param pickle_location: path to pickle file
-    :return coordinates: Nx3 numpy array for N atoms
-    :return elements: Nx1 list of strings for N atoms
-    :return velocities: Nx3 numpy array for N atoms
+    Arguments:
+        pickle_location (path): path read the pickled data from
+
+    Returns:
+        coordinates, elements, velocities (tuple)
+            - coordinates (np.array): coordinate data
+            - elements (list of str): atomic species data
+            - velocities (np.array): velocity data
     """
     logging.info(f"reading state from {pickle_location}")
     with open(pickle_location, "rb") as file:
@@ -130,10 +147,11 @@ def write_state(coordinates, elements, velocities, pickle_location):
     Writes current state of calculation to pickle file. The pickle file stores the coordinates, species (elements),
     and velocities of all simulated atoms.
 
-    :param coordinates: Nx3 numpy array for N atoms
-    :param elements: Nx1 list of strings for N atoms
-    :param velocities: Nx3 numpy array for N atoms
-    :param pickle_location: path to pickle file
+    Arguments:
+        coordinates (np.array): coordinate data
+        elements (list of str): atomic species data
+        velocities (np.array): velocity data
+        pickle_location (path): path to save the pickled data to
     """
     logging.info(f"writing state to {pickle_location}")
     data = {
@@ -146,7 +164,15 @@ def write_state(coordinates, elements, velocities, pickle_location):
 
 
 def read_settings_from_file(settings_filename):
-    """Read and validate the YAML file containing simulation settings"""
+    """
+    Read and validate a YAML file containing simulation settings.
+
+    Arguments:
+        settings_filename (path): path to a YAML file containing settings for the simulation
+
+    Returns:
+        settings (dict): validated settings for the deposition simulation
+    """
     with open(settings_filename) as file:
         settings = yaml.safe_load(file)
     settings = schema_definitions.settings_schema().validate(settings)

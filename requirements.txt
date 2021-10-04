@@ -1,3 +1,4 @@
+click==7.1.2
 numpy==1.20.2
 pandas==1.2.4
 pymatgen==2022.0.8
