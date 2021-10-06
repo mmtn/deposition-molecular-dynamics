@@ -34,7 +34,7 @@ class Deposition:
             self.settings["deposition_time_picoseconds"],
             self.settings["relaxation_time_picoseconds"]
         )
-        self.iteration_number, self.sequential_failures, self.pickle_location = self.read_status()
+        self.iteration_number, self.sequential_failures, self.total_failures, self.pickle_location = self.read_status()
 
     def initial_setup(self):
         """
@@ -68,6 +68,7 @@ class Deposition:
                 self.sequential_failures = 0
             else:
                 self.sequential_failures += 1
+                self.total_failures += 1
             self.iteration_number += 1
             self.write_status()
 
@@ -91,11 +92,12 @@ class Deposition:
                 status = yaml.safe_load(file)
             iteration_number = int(status["iteration_number"])
             sequential_failures = int(status["sequential_failures"])
+            total_failures = int(status["total_failures"])
             pickle_location = status["pickle_location"]
-            return iteration_number, sequential_failures, pickle_location
+            return iteration_number, sequential_failures, total_failures, pickle_location
         except FileNotFoundError:
             logging.info(f"no {Deposition._status_file} file found")
-            return None, None, None
+            return None, None, None, None
 
     def write_status(self):
         """
@@ -106,6 +108,7 @@ class Deposition:
             "last_updated": dt.now(),
             "iteration_number": self.iteration_number,
             "sequential_failures": self.sequential_failures,
+            "total_failures": self.total_failures,
             "pickle_location": self.pickle_location
         }
         with open(Deposition._status_file, "w") as file:
