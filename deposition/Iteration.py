@@ -4,7 +4,6 @@ import shutil
 import subprocess
 from string import Template
 
-
 from deposition import io, randomisation, structural_analysis
 
 
@@ -25,8 +24,8 @@ class Iteration:
         self.settings = settings
         self.iteration_number = iteration_number
         self.pickle_location = pickle_location
-        self.deposition_filename = f"{settings['working_dir']}/deposition{self.iteration_number:03d}"
-        self.relaxation_filename = f"{settings['working_dir']}/relaxation{self.iteration_number:03d}"
+        self.deposition_filename = f"{io.directories['working_dir']}/deposition{self.iteration_number:03d}"
+        self.relaxation_filename = f"{io.directories['working_dir']}/relaxation{self.iteration_number:03d}"
         self.success = False
 
     def run(self):
@@ -51,7 +50,7 @@ class Iteration:
         io.write_state(coordinates, elements, velocities, pickle_location=f"{self.relaxation_filename}.pickle")
 
     def deposition(self):
-        """Runs the deposition phase of the iteration including the randomisation of new atoms/molecules."""
+        """Runs the deposition phase of the iteration including the random addition of new atoms/molecules."""
         coordinates, elements, velocities = io.read_state(f"{self.relaxation_filename}.pickle")
         coordinates, elements, velocities = randomisation.append_new_coordinates_and_velocities(
             self.settings,
@@ -71,14 +70,14 @@ class Iteration:
         coordinates, elements, _ = io.read_state(f"{self.deposition_filename}.pickle")
         self.check_outcome(coordinates, elements)
         if not self.success:
-            destination_directory = f"{self.settings['failure_dir']}/{self.iteration_number:03d}/"
+            destination_directory = f"{io.directories['failure_dir']}/{self.iteration_number:03d}/"
         else:
-            destination_directory = f"{self.settings['success_dir']}/{self.iteration_number:03d}/"
+            destination_directory = f"{io.directories['success_dir']}/{self.iteration_number:03d}/"
             self.pickle_location = f"{destination_directory}/deposition{self.iteration_number:03d}.pickle"
         logging.info(f"moving data for iteration {self.iteration_number} to {destination_directory}")
-        shutil.copytree(self.settings['working_dir'], destination_directory)
-        shutil.rmtree(self.settings['working_dir'])
-        os.mkdir(self.settings['working_dir'])
+        shutil.copytree(io.directories['working_dir'], destination_directory)
+        shutil.rmtree(io.directories['working_dir'])
+        os.mkdir(io.directories['working_dir'])
 
     def call_process(self, filename):
         """

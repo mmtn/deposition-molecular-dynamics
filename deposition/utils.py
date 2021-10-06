@@ -2,6 +2,7 @@ import importlib
 import logging
 
 import numpy as np
+import yaml
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
@@ -72,6 +73,7 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
     """
     driver = None
     chosen_driver = driver_settings["name"]
+    simulation_cell_full = get_simulation_cell(simulation_cell)
 
     available_drivers = [driver for driver in dir(drivers) if driver.startswith("_") is False]
     for driver_name in available_drivers:
@@ -82,10 +84,11 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
                 assert callable(class_attr.write_inputs), "driver class must provided write_inputs method"
                 assert callable(class_attr.read_outputs), "driver class must provided read_outputs method"
                 if class_attr.name.upper() == chosen_driver.upper():
+                    # initialise the driver but only allowing specific variables in the eval statement
                     driver = eval(
-                        f"drivers.{driver_name}(driver_settings, simulation_cell)",
+                        f"drivers.{driver_name}(driver_settings, simulation_cell_full)",
                         {"__builtins__": {"drivers": drivers}},
-                        {"driver_settings": driver_settings, "simulation_cell": simulation_cell}
+                        {"driver_settings": driver_settings, "simulation_cell_full": simulation_cell_full}
                     )
                     logging.info(f"Using driver {driver_name} for {chosen_driver}")
 
@@ -96,4 +99,21 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
     schema_validation.check_input_file_syntax(driver)
     driver.settings.update({"deposition_time_picoseconds": deposition_time_picoseconds})
     driver.settings.update({"relaxation_time_picoseconds": relaxation_time_picoseconds})
+
     return driver
+
+
+def read_settings_from_file(settings_filename):
+    """
+    Read and validate a YAML file containing simulation settings.
+
+    Arguments:
+        settings_filename (path): path to a YAML file containing settings for the simulation
+
+    Returns:
+        settings (dict): validated settings for the deposition simulation
+    """
+    with open(settings_filename) as file:
+        settings = yaml.safe_load(file)
+    settings = schema_definitions.settings_schema().validate(settings)
+    return settings

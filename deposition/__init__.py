@@ -1,5 +1,5 @@
-from . import Deposition
-from . import Iteration
+from .Deposition import Deposition
+from .Iteration import Iteration
 
 from . import io
 from . import maths

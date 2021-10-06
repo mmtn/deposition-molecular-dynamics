@@ -3,8 +3,8 @@ from datetime import datetime as dt
 
 import yaml
 
-from deposition.Iteration import Iteration
 from deposition import io, utils
+from deposition.Iteration import Iteration
 
 
 class Deposition:
@@ -17,9 +17,6 @@ class Deposition:
     # TODO: track and report total number of failed iterations
     # TODO:
     _status_file = "status.yaml"
-    _working_dir = "current"
-    _success_dir = "iterations"
-    _failure_dir = "failed"
 
     def __init__(self, settings):
         """
@@ -30,19 +27,10 @@ class Deposition:
             settings (dict): deposition settings (read with `deposition.io.read_settings_from_file()`)
         """
         self.settings = settings
-        self.settings.update(
-            {
-                "status_file": self._status_file,
-                "working_dir": self._working_dir,
-                "success_dir": self._success_dir,
-                "failure_dir": self._failure_dir,
-            }
-        )
         io.start_logging(self.settings["log_filename"])
-        self.simulation_cell = utils.get_simulation_cell(settings["simulation_cell"])
         self.driver = utils.get_molecular_dynamics_driver(
             self.settings["driver_settings"],
-            self.simulation_cell,
+            self.settings["simulation_cell"],
             self.settings["deposition_time_picoseconds"],
             self.settings["relaxation_time_picoseconds"]
         )
@@ -58,7 +46,7 @@ class Deposition:
         self.pickle_location = "initial_positions.pickle"
         coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
         io.write_state(coordinates, elements, velocities=None, pickle_location=self.pickle_location)
-        io.make_directories((Deposition._working_dir, Deposition._success_dir, Deposition._failure_dir))
+        io.make_directories(tuple(io.directories.values()))
         self.write_status()
 
     def run(self):
@@ -66,7 +54,7 @@ class Deposition:
         Executes the main deposition loop using the :class:`Iteration` class.
 
         Returns:
-            exit_code (int) = a code relating to the reason for the termination of the calculation
+            exit_code (int): a code relating to the reason for the termination of the calculation
         """
         if self.iteration_number is None:
             self.initial_setup()

@@ -7,9 +7,12 @@ import sys
 from string import Template
 
 import numpy as np
-import yaml
 
-from deposition import schema_definitions
+directories = {
+    "working_dir": "current",
+    "success_dir": "iterations",
+    "failure_dir": "failed",
+}
 
 
 def start_logging(log_filename):
@@ -161,19 +164,3 @@ def write_state(coordinates, elements, velocities, pickle_location):
     }
     with open(pickle_location, "wb") as file:
         pickle.dump(data, file)
-
-
-def read_settings_from_file(settings_filename):
-    """
-    Read and validate a YAML file containing simulation settings.
-
-    Arguments:
-        settings_filename (path): path to a YAML file containing settings for the simulation
-
-    Returns:
-        settings (dict): validated settings for the deposition simulation
-    """
-    with open(settings_filename) as file:
-        settings = yaml.safe_load(file)
-    settings = schema_definitions.settings_schema().validate(settings)
-    return settings
