@@ -21,9 +21,9 @@ Additional documentation
 
    GULPDriver
    LAMMPSDriver
-   new_drivers
    TemplateDriver
    MolecularDynamicsDriver
+   new_drivers
 
 
 External links

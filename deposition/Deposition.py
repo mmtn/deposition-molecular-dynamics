@@ -14,8 +14,6 @@ class Deposition:
     been performed and how many have failed. The  Deposition class will also initialise a molecular dynamics driver.
     """
 
-    # TODO: track and report total number of failed iterations
-    # TODO:
     _status_file = "status.yaml"
 
     def __init__(self, settings):

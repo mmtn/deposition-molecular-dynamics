@@ -3,10 +3,10 @@ deposition
 
 A Python wrapper for simulating deposition processes with molecular dynamics.
 
-Todo
+TODO
 ----
 
-- add additional information to the page about writing new drivers
+- add writing to example
 - check structural analysis routines for bugs
 - improve analysis for reflected deposition events
 - allow deposition of molecules (structure specified by an XYZ file maybe?)
@@ -16,11 +16,16 @@ Requirements
 
 - Python 3.8
 
-Set up
-------
+Installation
+------------
+
+Clone the repository::
+
+    git clone https://github.com/mmtn/deposition-molecular-dynamics.git
 
 Create a virtual environment and install the required packages::
 
+    cd deposition-molecular-dynamics
     python3 -m venv venv
     source venv/bin/activate
     pip install --upgrade pip
@@ -32,13 +37,13 @@ Build the documentation::
 
 This can then be accessed by opening `html-docs/index.html` in your browser. Sphinx can also build the documentation in
 plain text, as a PDF using LaTeX, or in other ways. Various builders are listed
-`here <https://www.sphinx-doc.org/en/master/usage/builders/index.html>`_
+`here <https://www.sphinx-doc.org/en/master/usage/builders/index.html>`_.
 
 Structure of the code
 ---------------------
 
 It is helpful to understand the layout of the code to use it most effectively. The primary object which manages the
-simulation is the :doc:`Deposition class <classes/Deposition>`. It is responsible for creating the directories where
+simulation is the :doc:`Deposition <classes/Deposition>` class. It is responsible for creating the directories where
 calculation data will be kept, transferring data between iterations, and keeping track of how many iterations have been
 performed and how many have failed. The `Deposition` class will also initialise a molecular dynamics
 :doc:`driver <drivers/drivers>`. In the input settings, the name of a driver must be specified. This driver is
@@ -87,22 +92,22 @@ input template can be found :ref:`here <example_template>`.
 
 .. note::
 
-   The `${filename}` variable is reserved and **must** be placed in the template for the names of any input and output
+   The `${filename}` variable is reserved and must be placed in the template for the names of any input and output
    files. For example, in the LAMMPS input template the final state is written using the command
    `write_data ${filename}.output_data`.
 
 To summarise, the following files are required:
 
     - calculation settings specified in YAML file (including specification of driver settings and the simulation cell)
-    - initial atomic structure specified in XYZ file
-    - input template for the given molecular dynamics software
+    - the initial atomic structure specified in XYZ file
+    - an input template for the given molecular dynamics software
 
 Once these requirements are satisfied the `run_deposition.py` script can be used to start the deposition from the
-command line. In directory where you have stored your settings and substrate, simply run::
+command line. In directory where you have stored your settings and substrate, run::
 
     python3 path/to/run_deposition.py --settings settings/settings.yaml
 
-Alternatively you can start a simulation from your own Python script like so::
+Alternatively you can start a simulation from your own Python script::
 
     import deposition
 
