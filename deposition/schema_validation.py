@@ -3,11 +3,12 @@ import re
 
 from schema import Optional, Schema, SchemaError, Use
 
-ALLOWED_DEPOSITION_TYPES = [
-    "monatomic",
-    "diatomic",
-]
-# list of explicitly allowed deposition types
+DEPOSITION_TYPES = {
+    "monatomic": ["deposition_element"],
+    "diatomic": ["deposition_element", "diatomic_bond_length_Angstroms"],
+    "molecule": ["molecule_xyz_file"],
+}
+# list of explicitly allowed deposition types along with conditionally required settings
 
 GLOBALLY_RESERVED_KEYWORDS = [
     "filename",
@@ -22,10 +23,10 @@ def allowed_deposition_type(deposition_type):
     Arguments:
         deposition_type (str)
     """
-    if deposition_type in ALLOWED_DEPOSITION_TYPES:
+    if deposition_type in DEPOSITION_TYPES.keys():
         return deposition_type
     else:
-        raise SchemaError(f"deposition type must be one of: {ALLOWED_DEPOSITION_TYPES}")
+        raise SchemaError(f"deposition type must be one of: {DEPOSITION_TYPES.keys()}")
 
 
 def strictly_positive(number):

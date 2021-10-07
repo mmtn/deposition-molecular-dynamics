@@ -103,7 +103,7 @@ def read_xyz(xyz_file, step=None):
         ]
         elements = [atom[0] for atom in atom_data]
 
-    return coordinates, elements, num_atoms
+    return np.array(coordinates), elements, num_atoms
 
 
 def write_file_using_template(output_filename, template_filename, template_values):

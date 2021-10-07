@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from pymatgen.core.periodic_table import Element
 
-from deposition import maths, physics, structural_analysis
+from deposition import io, maths, physics, structural_analysis
 
 
 def append_new_coordinates_and_velocities(settings, coordinates, elements, velocities, simulation_cell,
@@ -47,9 +47,12 @@ def append_new_coordinates_and_velocities(settings, coordinates, elements, veloc
             coordinates_new = random_diatomic_position(simulation_cell, new_z_position, bond_length)
             elements_new = [deposition_element.name for _ in range(2)]
             velocities_new = random_diatomic_velocities(gas_temperature, particle_mass, bond_length, minimum_velocity)
-        else:
-            logging.warning("deposition_type must be either 'monatomic' or 'diatomic'")
-            raise ValueError(f"deposition_type {deposition_type} is unknown")
+        elif deposition_type == "molecule":
+            molecule_coordinates, molecule_elements, num_atoms = io.read_xyz(settings["molecule_xyz_file"])
+            molecule_mass = calculate_molecular_mass(molecule_elements)
+            coordinates_new = random_molecule_position(simulation_cell, new_z_position, molecule_coordinates)
+            elements_new = molecule_elements
+            velocities_new = random_molecule_velocities(gas_temperature, molecule_mass, minimum_velocity, num_atoms)
 
         coordinates = np.vstack((coordinates, coordinates_new))
         elements = elements + elements_new
@@ -69,10 +72,12 @@ def random_position(simulation_cell, new_z_position):
     Returns:
         new_position (np.array): coordinates of the newly added particle(s)
     """
-    base_polygon_coordinates = [(simulation_cell["x_min"], simulation_cell["y_min"]),
-                                (simulation_cell["x_max"], simulation_cell["y_min"]),
-                                (simulation_cell["x_min"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
-                                (simulation_cell["x_max"] + simulation_cell["tilt_xy"], simulation_cell["y_max"])]
+    base_polygon_coordinates = [
+        (simulation_cell["x_min"], simulation_cell["y_min"]),
+        (simulation_cell["x_max"], simulation_cell["y_min"]),
+        (simulation_cell["x_min"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
+        (simulation_cell["x_max"] + simulation_cell["tilt_xy"], simulation_cell["y_max"])
+    ]
     relative_height = new_z_position / (simulation_cell["z_max"] - simulation_cell["z_min"])
     relative_shift = simulation_cell["z_vector"] * relative_height
     polygon_coordinates = np.add(base_polygon_coordinates, relative_shift[0:1])
@@ -99,8 +104,10 @@ def random_velocity(gas_temperature, particle_mass, minimum_velocity, max_iterat
         vz = np.abs(physics.velocity_from_normal_distribution(gas_temperature, particle_mass))
         if vz > minimum_velocity:
             return np.array((vx, vy, -vz))
-    raise ValueError(f"failed to generate a velocity greater than the specified minimum of {minimum_velocity} m/s "
-                     f"after {max_iterations} iterations")
+    raise ValueError(
+        f"failed to generate a velocity greater than the specified minimum of {minimum_velocity} m/s "
+        f"after {max_iterations} iterations"
+    )
 
 
 def random_diatomic_position(simulation_cell, new_z_position, bond_length):
@@ -148,3 +155,58 @@ def random_diatomic_velocities(gas_temperature, particle_mass, bond_length, mini
     vz1 = vz + tangential_xy
     vz2 = vz - tangential_xy
     return np.array(((vx, vy1, vz1), (vx, vy2, vz2)))
+
+
+def random_molecule_position(simulation_cell, new_z_position, molecule_coordinates):
+    """
+    Randomly generates a position within the simulation cell on a plane at the specified z-coordinate and centres the
+    molecule at this point.
+
+    Arguments:
+        simulation_cell (dict): specification of the size and shape of the simulation cell
+        new_z_position (float): height in z of the newly added particle(s) (Angstroms)
+        molecule_coordinates (np.array): coordinates of the atoms in the molecule to be added
+
+    Returns:
+        new_coordinates (np.array): coordinates of the molecule placed at a randomly generated position in the cell
+    """
+    central_position = random_position(simulation_cell, new_z_position)
+    centre_of_molecule = np.mean(molecule_coordinates, axis=0)
+    relative_molecule_coordinates = molecule_coordinates - centre_of_molecule
+    new_coordinates = central_position + relative_molecule_coordinates
+    return new_coordinates
+
+
+def random_molecule_velocities(gas_temperature, molecule_mass, minimum_velocity, num_atoms):
+    """
+    Randomly generate the velocity of the newly added molecule based on the kinetic temperature and mass. All atoms in
+    the molecule are given identical velocities.
+
+    Arguments:
+        gas_temperature (float): temperature of the deposition material (Kelvin)
+        molecule_mass (float): mass of the molecule to be added (kg)
+        minimum_velocity (float): sets a minimum bound on the generated velocity (m/s)
+        num_atoms (int): the number of atoms in the molecule
+
+    Returns:
+        repeated_velocities (np.array): velocities of the atoms in the deposited molecule
+    """
+
+    velocity = random_velocity(gas_temperature, molecule_mass, minimum_velocity)
+    repeated_velocities = np.repeat(np.atleast_2d(velocity), repeats=num_atoms, axis=0)
+    return repeated_velocities
+
+
+def calculate_molecular_mass(molecule_elements):
+    """
+    Calculates the total mass of the molecule to be deposited.
+
+    Arguments:
+        molecule_elements (list): list of strings matching the chemical species in the deposited molecule
+
+    Returns:
+        total_mass (float): the total mass in kg of the elements in the molecule
+    """
+    masses = [Element(element).atomic_mass for element in molecule_elements]
+    total_mass = sum(masses) * physics.CONSTANTS["AtomicMassUnit_kg"]
+    return total_mass

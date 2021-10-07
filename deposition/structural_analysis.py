@@ -111,6 +111,8 @@ def check_min_neighbours(simulation_cell, coordinates, deposition_type, bonding_
         min_neighbours = 1
     elif deposition_type == "diatomic":
         min_neighbours = 2
+    elif deposition_type == "molecule":
+        min_neighbours = 0
     else:
         raise ValueError("deposition type not recognised")
     neighbour_list = generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff)

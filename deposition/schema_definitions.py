@@ -17,9 +17,7 @@ def settings_schema():
 
     - deposition_type (required, `string`)
         - the style of deposition to perform
-        - available options: 'monatomic' or 'diatomic'
-    - deposition_element (required, `string`)
-        - symbol of the element to be deposited
+        - available options: 'monatomic', 'diatomic', 'molecule'
     - deposition_height_Angstroms (required, `int` or `float`)
         - how far above the surface to add new atoms/molecules
     - deposition_temperature_Kelvin (required, `int` or `float`)
@@ -48,12 +46,15 @@ def settings_schema():
         - path to use for the log file
     - command_prefix (optional, `string` default="")
         - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
-    - diatomic_bond_length_Angstroms (required for diatomic deposition, `int` or `float`):
+    - deposition_element (required for 'monatomic' or 'diatomic' deposition, `string`)
+        - symbol of the element to be deposited
+    - diatomic_bond_length_Angstroms (required for 'diatomic' deposition, `int` or `float`):
         - diatomic bond length
+    - molecule_xyz_file (required for 'molecule' deposition, `path`):
+        - path to the structure of the molecule to be deposited
     """
     return Schema({
         "deposition_type": And(str, Use(allowed_deposition_type)),
-        "deposition_element": str,
         "deposition_height_Angstroms": And(Or(int, float), Use(strictly_positive)),
         "deposition_temperature_Kelvin": And(Or(int, float), Use(strictly_positive)),
         "minimum_deposition_velocity_metres_per_second": And(Or(int, float), Use(strictly_positive)),
@@ -68,7 +69,9 @@ def settings_schema():
         "substrate_xyz_file": os.path.exists,
         Optional("log_filename", default="deposition.log"): str,
         Optional("command_prefix", default=""): str,
+        Optional("deposition_element"): str,
         Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(strictly_positive)),
+        Optional("molecule_xyz_file"): os.path.exists,
     })
 
 
