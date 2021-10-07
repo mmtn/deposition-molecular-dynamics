@@ -41,6 +41,7 @@ class Deposition:
         """
         self.iteration_number = 1
         self.sequential_failures = 0
+        self.total_failures = 0
         self.pickle_location = "initial_positions.pickle"
         coordinates, elements, _ = io.read_xyz(self.settings["substrate_xyz_file"])
         io.write_state(coordinates, elements, velocities=None, pickle_location=self.pickle_location)
