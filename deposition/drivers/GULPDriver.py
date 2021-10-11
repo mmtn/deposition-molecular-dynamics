@@ -12,38 +12,52 @@ class GULPDriver(MolecularDynamicsDriver):
     Class to interface between deposition package and GULP software
 
     GULPDriver defines input variables required for the driver functions to work, as well as how to call GULP on the
-    command line, write GULP input files, and read GULP output files. The `schema_dictionary` defines additional
+    command line, write GULP input files, and read GULP output files. The `schema_dict` defines additional
     inputs which are required when using the GULP driver.
     """
     name = "GULP"
     """String matched against input settings when initialising the driver."""
 
-    schema_dictionary = {
+    schema_dict = {
         "GULP_LIB": os.path.exists,
-        Optional("production_time_picoseconds"): Use(schema_validation.reserved_keyword),
-        Optional("thermostat_damping"): Use(schema_validation.reserved_keyword),
-        Optional("x_size"): Use(schema_validation.reserved_keyword),
-        Optional("y_size"): Use(schema_validation.reserved_keyword),
-        Optional("z_size"): Use(schema_validation.reserved_keyword),
-        Optional("alpha"): Use(schema_validation.reserved_keyword),
-        Optional("beta"): Use(schema_validation.reserved_keyword),
-        Optional("gamma"): Use(schema_validation.reserved_keyword),
+
     }
     """
-        The names and types of additional inputs for GULP:
+    The names and types of additional inputs for GULP:
 
-        - GULP_LIB (path): location of GULP library folder containing provided potentials 
-        - production_time_picoseconds (int or float): used in template for duration of simulation
-        - x_size (float): used in template to specify simulation cell
-        - y_size (float): used in template to specify simulation cell
-        - z_size (float): used in template to specify simulation cell
-        - alpha (float): used in template to specify simulation cell
-        - beta (float): used in template to specify simulation cell
-        - gamma (float): used in template to specify simulation cell
+    - GULP_LIB (path): location of GULP library folder containing provided potentials 
+    """
+
+    reserved_keywords = [
+        "production_time_picoseconds",
+        "thermostat_damping",
+        "x_size",
+        "y_size",
+        "z_size",
+        "alpha",
+        "beta",
+        "gamma",
+    ]
+    """
+    The names of keywords used internally for running GULP simulations:
+
+    - production_time_picoseconds (int or float): used in template for duration of simulation
+    - x_size (float): used in template to specify simulation cell
+    - y_size (float): used in template to specify simulation cell
+    - z_size (float): used in template to specify simulation cell
+    - alpha (float): used in template to specify simulation cell
+    - beta (float): used in template to specify simulation cell
+    - gamma (float): used in template to specify simulation cell
     """
 
     def __init__(self, driver_settings, simulation_cell):
-        super().__init__(driver_settings, simulation_cell, self.schema_dictionary)
+        super().__init__(
+            driver_settings,
+            simulation_cell,
+            driver_schema_dict=self.schema_dict,
+            driver_reserved_keywords=self.reserved_keywords,
+            driver_command=None
+        )
         self.set_environment_variables()
 
     def set_environment_variables(self):
@@ -64,6 +78,7 @@ class GULPDriver(MolecularDynamicsDriver):
             velocities (np.array): velocity data
             iteration_stage (str): either "relaxation" or "deposition"
         """
+
         def write_positions(filename, coordinates, elements):
             """
             Write positional data to the GULP input file
@@ -178,6 +193,7 @@ class GULPDriver(MolecularDynamicsDriver):
                 - elements (list): atomic species data
                 - velocities (np.array): velocity data
         """
+
         def get_data_types(trajectory_file):
             """
             Assess the type of data contained in the trajectory file.

@@ -12,14 +12,14 @@ class LAMMPSDriver(MolecularDynamicsDriver):
     Class to interface between deposition package and LAMMPS software
 
     LAMMPSDriver defines input variables required for the driver functions to work, as well as how to call LAMMPS on the
-    command line, write LAMMPS input files, and read LAMMPS output files. The `schema_dictionary` defines additional
+    command line, write LAMMPS input files, and read LAMMPS output files. The `schema_dict` defines additional
     inputs which are required when using the LAMMPS driver.
     """
 
     name = "LAMMPS"
     """String matched against input settings when initialising the driver."""
 
-    schema_dictionary = {
+    schema_dict = {
         "atomic_masses": list,  # list of int/floats
         "elements_in_potential": str,  # list of strings
         "timestep_scaling_from_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
@@ -31,16 +31,30 @@ class LAMMPSDriver(MolecularDynamicsDriver):
     - atomic_masses (list): masses of elements in the potential in atomic mass units
     - elements_in_potential (str): space separated list of elements in the potential, e.g. "Al O H"
     - timestep_scaling_from_picoseconds (int/float): required to calculate `num_steps` from the simulation times
-    - num_steps (int): used internally and substituted in the LAMMPS input template
     
     Note: the length and order of `atomic_masses` and `elements_in_potential` must match.
+    """
+
+    reserved_keywords = [
+        "num_steps",
+    ]
+    """
+    The names of keywords used internally for running LAMMPS simulations:
+    
+    - num_steps (int): the total number of steps in the calculation (total time / timestep)
     """
 
     command = "${prefix} ${binary} -in ${input_file} > ${output_file}"
     """Template used when calling LAMMPS subprocesses."""
 
     def __init__(self, driver_settings, simulation_cell):
-        super().__init__(driver_settings, simulation_cell, self.schema_dictionary, self.command)
+        super().__init__(
+            driver_settings,
+            simulation_cell,
+            driver_schema_dict=self.schema_dict,
+            driver_reserved_keywords=self.reserved_keywords,
+            driver_command=self.command
+        )
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
         """

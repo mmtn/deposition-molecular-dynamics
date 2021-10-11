@@ -63,7 +63,7 @@ def get_driver_reserved_keywords(driver):
         reserved_keywords (list): keywords reserved by the driver
     """
     reserved_keywords = list()
-    for key, value in driver.schema_dictionary.items():
+    for key, value in driver.schema_dict.items():
         if type(value) is Use and value._callable.__name__ == "reserved_keyword":
             reserved_keywords.append(key.schema)
     return reserved_keywords
@@ -77,8 +77,8 @@ def add_globally_reserved_keywords(driver):
         driver (MolecularDynamicsDriver): driver object with a schema dictionary
     """
     for key in GLOBALLY_RESERVED_KEYWORDS:
-        driver.schema_dictionary.update({Optional(key): Use(reserved_keyword)})
-    schema = Schema(driver.schema_dictionary, ignore_extra_keys=True)
+        driver.schema_dict.update({Optional(key): Use(reserved_keyword)})
+    schema = Schema(driver.schema_dict, ignore_extra_keys=True)
     schema.validate(driver.settings)
 
 
@@ -95,30 +95,38 @@ def check_input_file_syntax(driver):
     """
     # regex matches any variable placeholder starting with the $ character, either ${with} or $without braces
     template_key_regular_expression = r"[\$]([{]?[a-z,A-Z][_,a-z,A-Z,0-9]*[}]?)"
+    reserved_keywords = get_driver_reserved_keywords(driver)
 
     with open(driver.settings["path_to_input_template"]) as file:
         template_matched_keys = re.findall(template_key_regular_expression, file.read())
 
+    # check for mismatched delimiters
     template_keys = list()
     for key in template_matched_keys:
-        if ("{" in key and "}" not in key) or ("}" in key and "{" not in key):  # check for mismatched delimiters
+        if ("{" in key and "}" not in key) or ("}" in key and "{" not in key):
             raise SchemaError(f"incomplete variable specification: {key}")
         template_keys.append(key.strip("{}"))
 
+    # check that all internal keywords are present in the template
+    for key in reserved_keywords:
+        if key not in template_keys:
+            raise SchemaError(f"key '{key} is used internally by {driver.name} and must be present in the template")
+
+    # check that the template keys are populated by the input settings
     for key in template_keys:
         if key in driver.settings.keys():  # a value has been provided
             continue
-        elif key in get_driver_reserved_keywords(driver):  # ignore reserved keywords
+        elif key in reserved_keywords:  # ignore reserved keywords
             continue
         elif key not in driver.settings.keys():  # unknown key
             raise SchemaError(f"unknown key '{key}' present in input template but has no set value")
 
-    # check for keys in the input file that are not used in the template or elsewhere
+    # check for leftover keys in the input settings that are not used in the template or elsewhere
     unused_keys = list()
     for key in driver.settings:
         if key not in template_keys and key not in driver.schema.schema:
             unused_keys.append(key)
     if len(unused_keys) > 0:
         logging.warning("unused keys detected in input file:")
-        for key in unused_keys:
-            logging.warning(f"- {key}")
+        [logging.warning(f"- {key}") for key in unused_keys]
+

@@ -1,23 +1,43 @@
-from schema import Optional, Use
+import os
 
-from deposition import io, schema_validation
+from schema import Or
+
+from deposition import io
 from deposition.drivers.MolecularDynamicsDriver import MolecularDynamicsDriver
 
 
 class TemplateDriver(MolecularDynamicsDriver):
+    """
+    Template to help with writing new MolecularDynamicsDriver classes
+    """
 
     name = "Template"
 
-    schema_dictionary = {
-        Optional("custom_keyword"): Use(schema_validation.reserved_keyword),
+    schema_dict = {
+        "atomic_masses": list,
+        "path_to_potential": os.path.exists,
+        "thermostat_parameter": Or(float, int),
     }
 
+    reserved_keywords = [
+        "simulation_time",
+    ]
+
     command = "${prefix} ${binary} < ${input_file} > ${output_file}"
+
+    def __init__(self, driver_settings, simulation_cell):
+        super().__init__(
+            driver_settings,
+            simulation_cell,
+            driver_schema_dict=self.schema_dict,
+            driver_reserved_keywords=self.reserved_keywords,
+            driver_command=self.command
+        )
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
         def write_coordinates(file, coordinates):
             pass
-        
+
         def write_elements(file, elements):
             pass
 
