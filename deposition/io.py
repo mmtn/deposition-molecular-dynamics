@@ -28,7 +28,7 @@ def start_logging(log_filename):
     log_to_stdout = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
         "[%(asctime)s] %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s",
-        datefmt="%a, %d %b %Y %H:%M:%S"
+        datefmt="%a %d %b %Y %H:%M:%S"
     )
     log_to_file.setFormatter(formatter)
     log_to_stdout.setFormatter(formatter)
@@ -44,11 +44,17 @@ def make_directories(directory_names):
     Arguments:
         directory_names (tuple): list of directory names to be created
     """
+    data_is_present = False
     for name in directory_names:
         try:
             os.mkdir(name)
-        except FileExistsError:
-            logging.warning(f"directory \"{name}\" already exists, check for existing data before proceeding")
+            logging.info(f"created directory '{name}'")
+        except FileExistsError as error:
+            logging.warning(f"directory '{name}' already exists, check for existing data before proceeding")
+            data_is_present = True
+
+    if data_is_present:
+        raise FileExistsError(f"remove the following directories to proceed: {list(directories.values())}")
 
 
 def throw_away_lines(iterator, n):
