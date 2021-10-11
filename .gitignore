@@ -1,15 +1,16 @@
-# PyCharm
+# PyCharm files
 .idea/
 
 # Output of examples
 examples/
 
 # Python
-venv/
 **/__pycache__/
+venv/
+deposition.egg-info
 
-# Mac nonsense
+# Mac system files
 **.DS_Store
 
-# Sphinx doc output
+# Sphinx documentation output
 html-docs

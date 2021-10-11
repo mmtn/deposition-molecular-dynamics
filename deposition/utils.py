@@ -120,6 +120,4 @@ def read_settings_from_file(settings_filename):
     for requirement in schema_validation.DEPOSITION_TYPES[settings['deposition_type']]:
         assert requirement in settings.keys(), f"{requirement} required in {settings['deposition_type']} deposition"
 
-    print(settings)
-
     return settings

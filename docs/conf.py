@@ -5,7 +5,6 @@
 import os
 import sys
 
-# import deposition
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../deposition'))
 sys.path.insert(0, os.path.abspath('../deposition/drivers'))
@@ -36,9 +35,3 @@ autodoc_member_order = 'bysource'
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = 'haiku'
-
-# html_theme_options = {
-#     "rightsidebar": "false",
-# }
-
-# html_static_path = ['_static']
