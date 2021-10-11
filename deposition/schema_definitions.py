@@ -13,10 +13,10 @@ def settings_schema():
     Note that settings for the :meth:`simulation cell <deposition.schema_definitions.simulation_cell_schema>` and
     molecular dynamics :ref:`driver <drivers>` must also be provided.
 
-    List of settings:
+    List of required settings:
 
     - deposition_type (required, `string`)
-        - the style of deposition to perform
+        - the style of deposition to perform, may activate conditionally required settings (see below)
         - available options: 'monatomic', 'diatomic', 'molecule'
     - deposition_height_Angstroms (required, `int` or `float`)
         - how far above the surface to add new atoms/molecules
@@ -36,22 +36,32 @@ def settings_schema():
         - number of failed iterations before the calculation is terminated
     - maximum_total_iterations (required, `int`)
         - total number of iterations to run before exiting
-    - driver_settings (required, `dict`)
-        - settings for the :ref:`molecular dynamics drivers <drivers>`
-    - simulation_cell (required, `dict`)
-        - specification of the :meth:`simulation cell <deposition.schema_definitions.simulation_cell_schema>`
     - substrate_xyz_file (required, `path`)
         - path to an XYZ file of the initial substrate structures
-    - log_filename (optional, `path`, default="deposition.log")
-        - path to use for the log file
-    - command_prefix (optional, `string` default="")
-        - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
+
+    Required settings (additional sections):
+
+    - driver_settings (required, `dict`)
+        - settings for the :ref:`molecular dynamics driver <drivers>`
+    - simulation_cell (required, `dict`)
+        - specification of the :meth:`simulation cell <deposition.schema_definitions.simulation_cell_schema>`
+
+    Conditionally required settings:
+
     - deposition_element (required for 'monatomic' or 'diatomic' deposition, `string`)
         - symbol of the element to be deposited
     - diatomic_bond_length_Angstroms (required for 'diatomic' deposition, `int` or `float`):
         - diatomic bond length
     - molecule_xyz_file (required for 'molecule' deposition, `path`):
         - path to the structure of the molecule to be deposited
+
+    Optional settings:
+
+    - log_filename (optional, `path`, default="deposition.log")
+        - path to use for the log file
+    - command_prefix (optional, `string` default="")
+        - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
+
     """
     return Schema({
         "deposition_type": And(str, Use(allowed_deposition_type)),

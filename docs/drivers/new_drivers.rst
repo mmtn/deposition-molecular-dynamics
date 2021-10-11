@@ -14,7 +14,7 @@ The addition of a new molecular dynamics driver involves completing the followin
 - make a copy of `drivers/TemplateDriver.py` and rename it according to the name of the molecular dynamics software
 - change the `name` attribute in the driver to match the molecular dynamics software
 - write implementations of `write_inputs` and `read_outputs` specific to the software
-- (optionally) define software specific inputs in `schema_dictionary`
+- (optionally) define software specific inputs in `schema_dict`
 
 As with other drivers, an input template must be used which is compatible with the molecular dynamics driver and
 has a keyword which allows for the simulation time to vary between the relaxation and deposition stages of each
@@ -39,8 +39,8 @@ Attributes
 The name to use when referencing this molecular dynamics driver. The driver will be initialised when the name in the
 input settings matches this variable.
 
-`schema_dictionary` (optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`schema_dict` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 A dictionary listing the names and types of any additional inputs required by the molecular dynamics software. Keywords
 listed here can then be set as `driver_settings` in the YAML file containing the deposition settings. The dictionary is

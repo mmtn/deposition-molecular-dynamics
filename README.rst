@@ -1,15 +1,23 @@
 deposition
 ==========
 
+.. warning::
+
+   This repository is not maintained! It is freely available (licensed under GNU `GPLv3`_) in the hopes that it will be
+   useful to someone. If you do find this project useful in your work, please cite the `paper`_ for which it was
+   developed.
+
+   .. _paper: https://doi.org/10.1038/s41534-020-00360-4
+   .. _GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
+
 A Python wrapper for simulating deposition processes with molecular dynamics.
 
 TODO
 ----
 
-- add writing to example
+- check that GULP example is functional
 - check structural analysis routines for bugs
 - improve analysis for reflected deposition events
-- allow deposition of molecules (structure specified by an XYZ file maybe?)
 
 Requirements
 ------------
@@ -79,8 +87,7 @@ Usage
 
 The settings for the deposition simulation should be specified in a `YAML <https://yaml.org/>`_ file. The full list of
 inputs can be seen :doc:`here <modules/schema_definitions>`. This should include settings for the molecular dynamics
-:doc:`driver <drivers/drivers>` you wish you use. You can use the file `examples/LAMMPS/settings/settings.yaml` as an
-:ref:`example <example_settings>`.
+:doc:`driver <drivers/drivers>` you wish you use. A detailed :ref:`example <example>` is available.
 
 The initial state of the system before anything has been deposited must be provided in an XYZ file which is specified in
 the input settings.

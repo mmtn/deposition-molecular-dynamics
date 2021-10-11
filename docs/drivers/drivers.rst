@@ -12,6 +12,14 @@ documentation for information about additional settings and configuration.
 If you are interested in writing your own driver for a different piece of software see
 :doc:`here <new_drivers>`.
 
+The following settings are required for all drivers:
+
+- `name` (str): name of the molecular dynamics software
+- `path_to_binary` (path): path to the binary of the molecular dynamics software
+- `path_to_input_template` (path): path to the input template
+- `velocity_scaling_from_metres_per_second` (int/float): scaling value to convert from the internal units of the
+  software to SI units, e.g. scale by 0.00001 to convert from Angstroms per femtosecond to metres per second
+
 
 Additional documentation
 ------------------------
