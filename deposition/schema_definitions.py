@@ -61,7 +61,8 @@ def settings_schema():
         - path to use for the log file
     - command_prefix (optional, `string` default="")
         - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
-
+    - strict_structural_analysis (optional, `bool`, default=False)
+        - raises an error instead of a warning if the structural analysis fails
     """
     return Schema({
         "deposition_type": And(str, Use(allowed_deposition_type)),
@@ -77,11 +78,12 @@ def settings_schema():
         "driver_settings": dict,
         "simulation_cell": dict,
         "substrate_xyz_file": os.path.exists,
-        Optional("log_filename", default="deposition.log"): str,
-        Optional("command_prefix", default=""): str,
         Optional("deposition_element"): str,
         Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(strictly_positive)),
         Optional("molecule_xyz_file"): os.path.exists,
+        Optional("log_filename", default="deposition.log"): str,
+        Optional("command_prefix", default=""): str,
+        Optional("strict_structural_analysis", default=False): bool,
     })
 
 

@@ -20,7 +20,6 @@ class GULPDriver(MolecularDynamicsDriver):
 
     schema_dict = {
         "GULP_LIB": os.path.exists,
-
     }
     """
     The names and types of additional inputs for GULP:
@@ -138,9 +137,9 @@ class GULPDriver(MolecularDynamicsDriver):
         template_values = self.settings
 
         if iteration_stage == "relaxation":
-            template_values.update({"production_time_ps": self.settings["relaxation_time_picoseconds"]})
+            template_values.update({"production_time_picoseconds": self.settings["relaxation_time_picoseconds"]})
         elif iteration_stage == "deposition":
-            template_values.update({"production_time_ps": self.settings["deposition_time_picoseconds"]})
+            template_values.update({"production_time_picoseconds": self.settings["deposition_time_picoseconds"]})
 
         template_values.update({"filename": filename})
         template_values.update({"thermostat_damping": thermostat_damping})
@@ -233,7 +232,8 @@ class GULPDriver(MolecularDynamicsDriver):
 
             with open(trajectory_file) as file:
                 _ = file.readline()
-                num_atoms, _ = file.readline().split()
+                num_atoms_str, _ = file.readline().split()
+                num_atoms = int(num_atoms_str)
 
             num_header_lines = 2
             num_lines_per_step = num_header_lines + (len(available_types) * (num_atoms + 1))
@@ -241,7 +241,7 @@ class GULPDriver(MolecularDynamicsDriver):
             num_steps = (num_lines_in_file - num_header_lines) / num_lines_per_step
             if step_number is None:
                 step_number = num_steps
-            num_lines_to_skip = num_header_lines + (num_lines_per_step * (step_number - 1))
+            num_lines_to_skip = int(num_header_lines + (num_lines_per_step * (step_number - 1)))
 
             with open(trajectory_file) as file:
                 io.throw_away_lines(file, num_lines_to_skip)

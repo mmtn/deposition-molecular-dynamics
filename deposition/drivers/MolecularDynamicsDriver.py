@@ -43,6 +43,7 @@ class MolecularDynamicsDriver:
         self.generic_schema_dict.update({str: Or(int, float, str)})
 
         self.schema = Schema(self.generic_schema_dict, ignore_extra_keys=True)
+        self.schema_dict = self.generic_schema_dict
         self.settings = self.schema.validate(driver_settings)
         self.simulation_cell = simulation_cell
         self.binary = self.settings["path_to_binary"]

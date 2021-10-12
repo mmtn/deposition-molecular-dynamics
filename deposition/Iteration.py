@@ -33,7 +33,10 @@ class Iteration:
         Runs one iteration of relaxation, deposition, and finalisation. Returns to Deposition the success or failure of
         this iteration, and the location of the saved data from which to start the next iteration.
 
-        :return: success, pickle_location
+        Returns:
+             success, pickle_location (tuple)
+                - success (bool): whether the iteration passes the structural analyses
+                - pickle_location (path): where the resulting data has been saved
         """
         logging.info(f"starting iteration {self.iteration_number}")
         self.relaxation()
@@ -83,7 +86,8 @@ class Iteration:
         """
         Run the molecular dynamics software for this phase of the iteration.
 
-        :param filename: name used to label this phase of this iteration
+        Arguments:
+            filename (str): name used to label this phase of this iteration
         """
         command_template = Template(self.driver.command)
         command_template_values = dict()
@@ -102,23 +106,31 @@ class Iteration:
         - each atom has at least the required minimum number of neighbours
         - if new atoms have bonded to the periodic copy of the substrate
 
-        :param coordinates: coordinates from the final state of the deposition
-        :param elements: elements from the final state of the deposition
+        Arguments:
+            coordinates (np.array): coordinates from the final state of the deposition
+            elements (list): elements from the final state of the deposition
         """
-        logging.info("running structural analysis to check outcome")
+        if self.settings["deposition_type"] == "monatomic":
+            num_deposited_atoms = self.settings["num_deposited_per_iteration"]
+        elif self.settings["deposition_type"] == "diatomic":
+            num_deposited_atoms = self.settings["num_deposited_per_iteration"] * 2
+        elif self.settings["deposition_type"] == "molecule":
+            _, _, molecule_num_atoms = io.read_xyz(self.settings["molecule_xyz_file"])
+            num_deposited_atoms = self.settings["num_deposited_per_iteration"] * molecule_num_atoms
+
+        logging.info("running structural analyses to check outcome")
         try:
-            structural_analysis.check_min_neighbours(
-                self.driver.simulation_cell, coordinates,
-                self.settings["deposition_type"],
+            structural_analysis.check_minimum_neighbours(
+                self.settings["simulation_cell"],
+                coordinates,
+                num_deposited_atoms,
                 self.settings["bonding_distance_cutoff_Angstroms"]
             )
-            structural_analysis.check_bonding_at_image(
-                self.driver.simulation_cell, coordinates, elements,
-                self.settings["deposition_element"],
-                self.settings["bonding_distance_cutoff_Angstroms"]
-            )
+
             self.success = True
         except RuntimeWarning as warning:
-            logging.warning(warning)
             logging.warning("post-processing check failed")
+            logging.warning(warning)
+            if self.settings["strict_structural_analysis"]:
+                raise RuntimeError(warning)
             self.success = False
