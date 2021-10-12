@@ -1,0 +1,14 @@
+conv md
+library ${library_name}
+integrator leapfrog verlet
+cell
+${x_size} ${y_size} ${z_size} ${alpha} ${beta} ${gamma}
+temperature ${temperature_of_system}
+equilibration ${equilibration_time_picoseconds} ps
+production ${production_time_picoseconds} ps
+timestep ${md_time_step_ps} ps
+sample ${sample_rate_ps} ps
+write ${write_rate_ps} ps
+output trajectory ascii ${filename}
+output xyz movie ${filename}.xyz
+ensemble nvt ${thermostat_damping}

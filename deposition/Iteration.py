@@ -24,8 +24,8 @@ class Iteration:
         self.settings = settings
         self.iteration_number = iteration_number
         self.pickle_location = pickle_location
-        self.deposition_filename = f"{io.directories['working_dir']}/deposition{self.iteration_number:03d}"
-        self.relaxation_filename = f"{io.directories['working_dir']}/relaxation{self.iteration_number:03d}"
+        self.deposition_filename = os.path.join(io.directories['working_dir'], f"deposition{self.iteration_number:03d}")
+        self.relaxation_filename = os.path.join(io.directories['working_dir'], f"relaxation{self.iteration_number:03d}")
         self.success = False
 
     def run(self):
@@ -47,6 +47,8 @@ class Iteration:
     def relaxation(self):
         """Runs the relaxation phase of the iteration."""
         coordinates, elements, velocities = io.read_state(self.pickle_location)
+        if self.settings["to_origin_before_each_iteration"]:
+            coordinates = structural_analysis.reset_to_origin(coordinates)
         self.driver.write_inputs(self.relaxation_filename, coordinates, elements, velocities, "relaxation")
         self.call_process(self.relaxation_filename)
         coordinates, elements, velocities = self.driver.read_outputs(self.relaxation_filename)
@@ -72,11 +74,11 @@ class Iteration:
         """Finalises the iteration by running structural analysis and moving the data to the appropriate directory"""
         coordinates, elements, _ = io.read_state(f"{self.deposition_filename}.pickle")
         self.check_outcome(coordinates, elements)
-        if not self.success:
-            destination_directory = f"{io.directories['failure_dir']}/{self.iteration_number:03d}/"
+        if self.success:
+            destination_directory = os.path.join(io.directories['success_dir'], f"{self.iteration_number:03d}/")
+            self.pickle_location = os.path.join(destination_directory, f"deposition{self.iteration_number:03d}.pickle")
         else:
-            destination_directory = f"{io.directories['success_dir']}/{self.iteration_number:03d}/"
-            self.pickle_location = f"{destination_directory}/deposition{self.iteration_number:03d}.pickle"
+            destination_directory = os.path.join(io.directories['failure_dir'], f"{self.iteration_number:03d}/")
         logging.info(f"moving data for iteration {self.iteration_number} to {destination_directory}")
         shutil.copytree(io.directories['working_dir'], destination_directory)
         shutil.rmtree(io.directories['working_dir'])

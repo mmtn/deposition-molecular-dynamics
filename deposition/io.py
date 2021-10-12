@@ -95,19 +95,20 @@ def read_xyz(xyz_file, step=None):
 
     if step is None:
         num_lines_to_skip = (lines_per_step * (total_steps - 1)) + header_lines_per_step
-    elif step == 1:
-        num_lines_to_skip = 0
     else:
-        raise NotImplementedError("reading arbitrary step number of XYZ file not available")
+        num_lines_to_skip = (lines_per_step * (step - 1)) + header_lines_per_step
 
     with open(xyz_file) as file:
         throw_away_lines(file, num_lines_to_skip)
-        atom_data = [line.split() for line in file]
+        atom_data = [line.split() for ii, line in enumerate(file) if ii < num_atoms]
         coordinates = [
             np.array([float(atom[1]), float(atom[2]), float(atom[3])])
             for atom in atom_data
         ]
         elements = [atom[0] for atom in atom_data]
+
+    if len(atom_data) != num_atoms:
+        raise IOError(f"error reading step {step} of {xyz_file}")
 
     return np.array(coordinates), elements, num_atoms
 

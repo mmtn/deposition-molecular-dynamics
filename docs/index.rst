@@ -2,9 +2,6 @@
    sphinx-quickstart on Mon Sep 20 11:49:26 2021.
 
 
-.. include:: ../README.rst
-
-
 Documentation
 =============
 
@@ -12,9 +9,15 @@ Documentation
    :maxdepth: 1
 
    example
-   Required input settings <modules/schema_definitions>
+   List of settings <modules/schema_definitions>
    drivers/drivers
    classes_and_modules
+
+
+README
+======
+
+.. include:: ../README.rst
 
 
 Indices and tables

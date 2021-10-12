@@ -61,6 +61,8 @@ def settings_schema():
         - path to use for the log file
     - command_prefix (optional, `string` default="")
         - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
+    - to_origin_before_each_iteration (optional, `bool`, default=False):
+        - relocates the structure to the origin before each iteration to prevent migration from depositing on top
     - strict_structural_analysis (optional, `bool`, default=False)
         - raises an error instead of a warning if the structural analysis fails
     """
@@ -83,6 +85,7 @@ def settings_schema():
         Optional("molecule_xyz_file"): os.path.exists,
         Optional("log_filename", default="deposition.log"): str,
         Optional("command_prefix", default=""): str,
+        Optional("to_origin_before_each_iteration", default=False): bool,
         Optional("strict_structural_analysis", default=False): bool,
     })
 

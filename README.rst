@@ -1,5 +1,5 @@
 deposition
-==========
+----------
 
 .. warning::
 
@@ -12,20 +12,13 @@ deposition
 
 A Python wrapper for simulating deposition processes with molecular dynamics.
 
-TODO
-----
-
-- check that GULP example is functional
-- check structural analysis routines for bugs
-- improve analysis for reflected deposition events
-
 Requirements
-------------
+^^^^^^^^^^^^
 
 - Python 3.8
 
 Installation
-------------
+^^^^^^^^^^^^
 
 Clone the repository::
 
@@ -43,12 +36,12 @@ Build the documentation::
 
     sphinx-build -b html docs html-docs
 
-This can then be accessed by opening `html-docs/index.html` in your browser. Sphinx can also build the documentation in
+The docs can then be accessed by opening `html-docs/index.html` in your browser. Sphinx can also build the documentation in
 plain text, as a PDF using LaTeX, or in other ways. Various builders are listed
 `here <https://www.sphinx-doc.org/en/master/usage/builders/index.html>`_.
 
 Structure of the code
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 It is helpful to understand the layout of the code to use it most effectively. The primary object which manages the
 simulation is the :doc:`Deposition <classes/Deposition>` class. It is responsible for creating the directories where
@@ -81,9 +74,8 @@ exceeded.
     To run the software in parallel you can specify a `command_prefix` in the settings such as "`mpiexec`". This will be
     prepended to the command for every molecular dynamics simulation.
 
-
 Usage
------
+^^^^^
 
 The settings for the deposition simulation should be specified in a `YAML <https://yaml.org/>`_ file. The full list of
 inputs can be seen :doc:`here <modules/schema_definitions>`. This should include settings for the molecular dynamics

@@ -1,7 +1,7 @@
 .. _example:
 
-Example calculation: oxidation of aluminium
--------------------------------------------
+Example: oxidation of aluminium
+-------------------------------
 
 Introduction
 ============

@@ -4,7 +4,7 @@ from pymatgen.core.sites import PeriodicSite
 from pymatgen.core.structure import IMolecule, IStructure
 
 
-def get_surface_height(simulation_cell, coordinates, percentage_of_box_to_search=80.0):
+def get_surface_height(simulation_cell, coordinates, percentage_of_box_to_search=80):
     """
     Crude method to find the surface of the existing structure by finding the maximum z-coordinate in the lower 80% of
     the simulation cell (by default).
@@ -21,6 +21,16 @@ def get_surface_height(simulation_cell, coordinates, percentage_of_box_to_search
     cutoff = lz * (percentage_of_box_to_search / 100)
     z = [xyz[2] for xyz in coordinates if xyz[2] < cutoff]
     return max(z)
+
+
+def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box_to_search=80):
+    lz = simulation_cell["z_max"] - simulation_cell["z_min"]
+    cutoff = lz * (percentage_of_box_to_search / 100)
+    return [
+        coordinates[ii] - simulation_cell["z_vector"]
+        if z > cutoff else coordinates[ii]
+        for ii, (x, y, z) in enumerate(coordinates)
+    ]
 
 
 def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff):
@@ -61,3 +71,12 @@ def check_minimum_neighbours(simulation_cell, coordinates, num_deposited_atoms, 
     neighbour_list = generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff)
     if np.any(np.less_equal(neighbour_list, num_deposited_atoms)):
         raise RuntimeWarning("one or more atoms has too few neighbouring atoms")
+
+
+def reset_to_origin(coordinates):
+    """
+    Moves the given coordinates back to the origin at (0, 0, 0)
+    """
+    minima = np.min(coordinates, axis=0)
+    shifted = np.subtract(coordinates, minima)
+    return shifted
