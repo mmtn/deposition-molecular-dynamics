@@ -10,13 +10,15 @@ from deposition import io, randomisation, structural_analysis
 class Iteration:
     """
     The `Iteration` class represents one cycle of relaxing the system before depositing an atom/molecule as specified
-    by the input settings. Each iteration consists of the following steps:
+    by the input settings.
+
+    Each iteration consists of the following steps:
 
     - relaxation: simulation at the specified temperature to equilibrate the system
     - deposition: simulation of the introduction of a new atom/molecule
     - finalisation: the final simulation state is analysed against various criteria and the data is stored
 
-    This class is also responsible for using the `subprocess` library to run the molecular dynamics software.
+    This class is also responsible for using the `subprocess` package to run the molecular dynamics software.
     """
 
     def __init__(self, driver, settings, iteration_number, pickle_location):

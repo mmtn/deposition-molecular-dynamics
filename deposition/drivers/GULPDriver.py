@@ -1,18 +1,17 @@
 import os
 
 import numpy as np
-from schema import Optional, Use
 
-from deposition import io, physics, schema_validation
+from deposition import io, physics
 from deposition.drivers.MolecularDynamicsDriver import MolecularDynamicsDriver
 
 
 class GULPDriver(MolecularDynamicsDriver):
     """
-    Class to interface between deposition package and GULP software
+    Class to interface between deposition package and GULP software.
 
     GULPDriver defines input variables required for the driver functions to work, as well as how to call GULP on the
-    command line, write GULP input files, and read GULP output files. The `schema_dict` defines additional
+    _command line, write GULP input files, and read GULP output files. The `schema_dict` defines additional
     inputs which are required when using the GULP driver.
     """
     name = "GULP"
@@ -80,7 +79,7 @@ class GULPDriver(MolecularDynamicsDriver):
 
         def write_positions(filename, coordinates, elements):
             """
-            Write positional data to the GULP input file
+            Write positional data to the GULP input file.
 
             Arguments:
                 filename (str): name to use for input files
@@ -94,7 +93,7 @@ class GULPDriver(MolecularDynamicsDriver):
 
         def write_velocities(filename, velocities):
             """
-            Write positional data to the GULP input file
+            Write positional data to the GULP input file.
 
             Arguments:
                 filename (str): name to use for input files
@@ -107,7 +106,7 @@ class GULPDriver(MolecularDynamicsDriver):
 
         def parameters_from_simulation_cell(simulation_cell):
             """
-            Get GULP friendly specification of the simulation cell from the dict
+            Get a GULP friendly specification of the simulation cell from the dict.
 
             Arguments:
                 simulation_cell (dict): specification of the size and shape of the simulation cell
@@ -159,7 +158,7 @@ class GULPDriver(MolecularDynamicsDriver):
     def get_thermostat_damping(num_atoms, temperature=300.0):
         """
         Calculate the required Nose-Hoover coupling constant which should give rise to canonical
-        temperature fluctuations throughout the simulation. The number is derived from a fitted power
+        temperature fluctuations throughout the simulation. The values used are derived from a fitted power
         law equation. See Section 2.4.1 in my `thesis`_.
 
         Arguments:

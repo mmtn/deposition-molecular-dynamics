@@ -9,6 +9,8 @@ from deposition.Iteration import Iteration
 
 class Deposition:
     """
+    The Deposition class controls the overall state of the calculation.
+
     This is the primary object which manages the simulation. It is responsible for creating the directories where
     calculation data will be kept, transferring data between iterations, and keeping track of how many iterations have
     been performed and how many have failed. The  Deposition class will also initialise a molecular dynamics driver.

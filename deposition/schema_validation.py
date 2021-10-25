@@ -41,7 +41,6 @@ def strictly_positive(number):
     return number
 
 
-# noinspection PyUnusedLocal
 def reserved_keyword(value):
     """
     Allows keywords to be reserved by molecular dynamics drivers where required.
@@ -129,4 +128,3 @@ def check_input_file_syntax(driver):
     if len(unused_keys) > 0:
         logging.warning("unused keys detected in input file:")
         [logging.warning(f"- {key}") for key in unused_keys]
-

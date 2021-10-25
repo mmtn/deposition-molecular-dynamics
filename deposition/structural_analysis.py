@@ -1,7 +1,7 @@
 import numpy as np
 from pymatgen.core.lattice import Lattice
 from pymatgen.core.sites import PeriodicSite
-from pymatgen.core.structure import IMolecule, IStructure
+from pymatgen.core.structure import IStructure
 
 
 def get_surface_height(simulation_cell, coordinates, percentage_of_box_to_search=80):
@@ -24,6 +24,18 @@ def get_surface_height(simulation_cell, coordinates, percentage_of_box_to_search
 
 
 def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box_to_search=80):
+    """
+    Take cartesian coordinates and wrap those at the top of the box back the main structure at the bottom of the box.
+    This will usually set negative z-coordinates for those atoms which are wrapped.
+
+    Arguments:
+        simulation_cell (dict): specification of the size and shape of the simulation cell
+        coordinates (np.array): coordinate data
+        percentage_of_box_to_search (float): how much of the simulation cell does not need to be wrapped
+
+    Returns:
+        wrapped_coordinates (np.array): coordinate data where high z-values are wrapped to negative z-values
+    """
     lz = simulation_cell["z_max"] - simulation_cell["z_min"]
     cutoff = lz * (percentage_of_box_to_search / 100)
     return [
@@ -76,6 +88,12 @@ def check_minimum_neighbours(simulation_cell, coordinates, num_deposited_atoms, 
 def reset_to_origin(coordinates):
     """
     Moves the given coordinates back to the origin at (0, 0, 0)
+
+    Arguments:
+        coordinates (np.array): coordinate data
+
+    Returns:
+        shifted_coordinates (np.array): coordinate data shifted to the origin
     """
     minima = np.min(coordinates, axis=0)
     shifted = np.subtract(coordinates, minima)
