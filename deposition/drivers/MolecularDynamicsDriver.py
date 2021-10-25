@@ -1,8 +1,8 @@
 import os
 
-from schema import And, Or, Optional, Schema, Use
+from schema import And, Optional, Or, Schema, Use
 
-from deposition import schema_validation
+from deposition.schema_validation import reserved_keyword, strictly_positive
 
 
 class MolecularDynamicsDriver:
@@ -10,40 +10,42 @@ class MolecularDynamicsDriver:
     Generic molecular dynamics driver class
     """
 
-    generic_schema_dict = {
+    _command = "${prefix} ${binary} < ${input_file} > ${output_file}"
+
+    _schema_dict = {
         "name": str,
         "path_to_binary": os.path.exists,
         "path_to_input_template": os.path.exists,
-        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(strictly_positive)),
     }
 
-    command = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    _reserved_keywords = [
+        "filename",
+    ]
 
-    def __init__(self, driver_settings, simulation_cell, driver_schema_dict=None, driver_reserved_keywords=None,
-                 driver_command=None):
+    def __init__(self, driver_settings, simulation_cell, command=None, schema_dict=None, reserved_keywords=None):
 
-        # add driver specific variables to schema
-        if driver_schema_dict is not None:
-            self.generic_schema_dict.update(driver_schema_dict)
-
-        # add reserved keywords to schema
-        if driver_reserved_keywords is not None:
-            reserved_keywords_schema_dict = {
-                Optional(keyword): Use(schema_validation.reserved_keyword)
-                for keyword in driver_reserved_keywords
-            }
-            self.generic_schema_dict.update(reserved_keywords_schema_dict)
+        if command is not None:
+            self.command = command
         else:
-            reserved_keywords_schema_dict = {}
+            self.command = self._command
 
-        if driver_command is not None:
-            self.command = driver_command
+        if schema_dict is not None:
+            self._schema_dict.update(schema_dict)
 
-        # this ensures that keys which are not explicitly listed are retained after validation
-        self.generic_schema_dict.update({str: Or(int, float, str)})
+        if reserved_keywords is not None:
+            [self._reserved_keywords.append(kw) for kw in reserved_keywords]
 
-        self.schema = Schema(self.generic_schema_dict, ignore_extra_keys=True)
-        self.schema_dict = self.generic_schema_dict
+        # add reserved keywords
+        reserved_keywords_schema_dict = {Optional(kw): Use(reserved_keyword) for kw in self._reserved_keywords}
+        self._schema_dict.update(reserved_keywords_schema_dict)
+        self._schema_dict.update({str: Or(int, float, str)})  # retain keys which are not explicitly listed
+
+        self.schema = Schema(self._schema_dict, ignore_extra_keys=True)
         self.settings = self.schema.validate(driver_settings)
         self.simulation_cell = simulation_cell
         self.binary = self.settings["path_to_binary"]
+
+    def get_reserved_keywords(self):
+        """Returns a list of global and driver specific reserved keywords"""
+        return self._reserved_keywords

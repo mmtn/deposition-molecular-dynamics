@@ -51,9 +51,9 @@ class LAMMPSDriver(MolecularDynamicsDriver):
         super().__init__(
             driver_settings,
             simulation_cell,
-            driver_schema_dict=self.schema_dict,
-            driver_reserved_keywords=self.reserved_keywords,
-            driver_command=self.command
+            command=self.command,
+            schema_dict=self.schema_dict,
+            reserved_keywords=self.reserved_keywords
         )
 
     def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):

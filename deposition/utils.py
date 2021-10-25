@@ -95,7 +95,6 @@ def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_t
     if driver is None:
         raise ValueError(f"no driver with the name '{chosen_driver}' was found")
 
-    schema_validation.add_globally_reserved_keywords(driver)
     schema_validation.check_input_file_syntax(driver)
     driver.settings.update({"deposition_time_picoseconds": deposition_time_picoseconds})
     driver.settings.update({"relaxation_time_picoseconds": relaxation_time_picoseconds})

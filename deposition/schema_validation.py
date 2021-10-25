@@ -1,7 +1,7 @@
 import logging
 import re
 
-from schema import Optional, Schema, SchemaError, Use
+from schema import SchemaError
 
 DEPOSITION_TYPES = {
     "monatomic": ["deposition_element"],
@@ -9,11 +9,6 @@ DEPOSITION_TYPES = {
     "molecule": ["molecule_xyz_file"],
 }
 # list of explicitly allowed deposition types along with conditionally required settings
-
-GLOBALLY_RESERVED_KEYWORDS = [
-    "filename",
-]
-# template keywords which are used internally
 
 
 def allowed_deposition_type(deposition_type):
@@ -51,36 +46,6 @@ def reserved_keyword(value):
     raise SchemaError("this key has been reserved for internal use")
 
 
-def get_driver_reserved_keywords(driver):
-    """
-    Find keywords reserved by the molecular dynamics driver.
-
-    Arguments:
-        driver (MolecularDynamicsDriver): driver object with a schema dictionary
-
-    Returns:
-        reserved_keywords (list): keywords reserved by the driver
-    """
-    reserved_keywords = list()
-    for key, value in driver.schema_dict.items():
-        if type(value) is Use and value._callable.__name__ == "reserved_keyword":
-            reserved_keywords.append(key.schema)
-    return reserved_keywords
-
-
-def add_globally_reserved_keywords(driver):
-    """
-    Adds globally reserved keywords to the keywords of the driver.
-
-    Arguments:
-        driver (MolecularDynamicsDriver): driver object with a schema dictionary
-    """
-    for key in GLOBALLY_RESERVED_KEYWORDS:
-        driver.schema_dict.update({Optional(key): Use(reserved_keyword)})
-    schema = Schema(driver.schema_dict, ignore_extra_keys=True)
-    schema.validate(driver.settings)
-
-
 def check_input_file_syntax(driver):
     """
     Validates the syntax of the input file template.
@@ -94,7 +59,7 @@ def check_input_file_syntax(driver):
     """
     # regex matches any variable placeholder starting with the $ character, either ${with} or $without braces
     template_key_regular_expression = r"[\$]([{]?[a-z,A-Z][_,a-z,A-Z,0-9]*[}]?)"
-    reserved_keywords = get_driver_reserved_keywords(driver)
+    reserved_keywords = driver.get_reserved_keywords()
 
     with open(driver.settings["path_to_input_template"]) as file:
         template_matched_keys = re.findall(template_key_regular_expression, file.read())

@@ -52,9 +52,8 @@ class GULPDriver(MolecularDynamicsDriver):
         super().__init__(
             driver_settings,
             simulation_cell,
-            driver_schema_dict=self.schema_dict,
-            driver_reserved_keywords=self.reserved_keywords,
-            driver_command=None
+            schema_dict=self.schema_dict,
+            reserved_keywords=self.reserved_keywords
         )
         self.set_environment_variables()
 
