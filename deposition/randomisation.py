@@ -72,11 +72,12 @@ def random_position(simulation_cell, new_z_position):
     Returns:
         new_position (np.array): coordinates of the newly added particle(s)
     """
+    # Note: order matters in this list. These points draw a matplotlib path, see maths.py:get_random_point_in_polygon.
     base_polygon_coordinates = [
         (simulation_cell["x_min"], simulation_cell["y_min"]),
         (simulation_cell["x_max"], simulation_cell["y_min"]),
+        (simulation_cell["x_max"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
         (simulation_cell["x_min"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
-        (simulation_cell["x_max"] + simulation_cell["tilt_xy"], simulation_cell["y_max"])
     ]
     relative_height = new_z_position / (simulation_cell["z_max"] - simulation_cell["z_min"])
     relative_shift = simulation_cell["z_vector"] * relative_height

@@ -1,5 +1,5 @@
 import numpy as np
-from shapely.geometry import Point, Polygon
+from matplotlib import path as mplpath
 
 
 def get_random_point_in_polygon(polygon_coordinates):
@@ -14,12 +14,12 @@ def get_random_point_in_polygon(polygon_coordinates):
             - x (float): x-coordinate of the randomly generated point
             - y (float): y-coordinate of the randomly generated point
     """
-    polygon = Polygon(polygon_coordinates)
-    x_min, y_min, x_max, y_max = polygon.bounds
+    polygon = mplpath.Path(polygon_coordinates)
+    bbox = polygon.get_extents()
     while True:
-        point = Point(np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max))
-        if polygon.contains(point):
-            return point.x, point.y
+        point = (np.random.uniform(bbox.xmin, bbox.xmax), np.random.uniform(bbox.ymin, bbox.ymax))
+        if polygon.contains_point(point):
+            return point[0], point[1]
 
 
 def normal_distribution(mean, sigma):
