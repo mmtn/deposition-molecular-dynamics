@@ -10,13 +10,14 @@ class MolecularDynamicsDriver:
     Generic molecular dynamics driver class
     """
 
-    _command = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    _command = "${prefix} ${binary} ${arguments} < ${input_file} > ${output_file}"
 
     _schema_dict = {
         "name": str,
         "path_to_binary": os.path.exists,
         "path_to_input_template": os.path.exists,
         "velocity_scaling_from_metres_per_second": And(Or(int, float), Use(strictly_positive)),
+        Optional("command_line_args", default=""): str,
     }
 
     _reserved_keywords = [

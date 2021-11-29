@@ -44,7 +44,7 @@ class LAMMPSDriver(MolecularDynamicsDriver):
     - num_steps (int): the total number of steps in the calculation (total time / timestep)
     """
 
-    command = "${prefix} ${binary} -in ${input_file} > ${output_file}"
+    command = "${prefix} ${binary} ${arguments} -in ${input_file} > ${output_file}"
     """Template used when calling LAMMPS subprocesses."""
 
     def __init__(self, driver_settings, simulation_cell):

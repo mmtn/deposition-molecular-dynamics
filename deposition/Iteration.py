@@ -97,6 +97,7 @@ class Iteration:
         command_template_values = dict()
         command_template_values["prefix"] = self.settings["command_prefix"]
         command_template_values["binary"] = self.driver.binary
+        command_template_values["arguments"] = self.driver.settings["command_line_args"]
         command_template_values["input_file"] = f"{filename}.input"
         command_template_values["output_file"] = f"{filename}.output"
         command = command_template.substitute(command_template_values)
