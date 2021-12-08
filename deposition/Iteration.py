@@ -50,7 +50,8 @@ class Iteration:
         """Runs the relaxation phase of the iteration."""
         coordinates, elements, velocities = io.read_state(self.pickle_location)
         if self.settings["to_origin_before_each_iteration"]:
-            coordinates = structural_analysis.reset_to_origin(coordinates)
+            wrapped = structural_analysis.wrap_coordinates_in_z(self.driver.simulation_cell, coordinates)
+            coordinates = structural_analysis.reset_to_origin(wrapped)
         self.driver.write_inputs(self.relaxation_filename, coordinates, elements, velocities, "relaxation")
         self.call_process(self.relaxation_filename)
         coordinates, elements, velocities = self.driver.read_outputs(self.relaxation_filename)
