@@ -3,46 +3,48 @@ import re
 
 from schema import SchemaError
 
+from deposition import Distributions
+
 DEPOSITION_TYPES = {
     "monatomic": ["deposition_element"],
-    "diatomic": ["deposition_element", "diatomic_bond_length_Angstroms"],
     "molecule": ["molecule_xyz_file"],
 }
 # list of explicitly allowed deposition types along with conditionally required settings
 
 
-def allowed_deposition_type(deposition_type):
-    """
-    Checks that the given deposition type is in the list of allowed types.
-
-    Arguments:
-        deposition_type (str)
-    """
+def allowed_deposition_types(deposition_type):
+    """Checks that the given deposition type is in the list of allowed types."""
     if deposition_type in DEPOSITION_TYPES.keys():
         return deposition_type
     else:
         raise SchemaError(f"deposition type must be one of: {DEPOSITION_TYPES.keys()}")
 
 
-def strictly_positive(number):
-    """
-    Checks that the number is greater than zero.
+def allowed_position_distributions(position_distribution):
+    """Checks that the position distribution is in the list of allowed distributions"""
+    if position_distribution in Distributions.POSITION_DISTRIBUTIONS:
+        return position_distribution
+    else:
+        raise SchemaError(f"position type must be one of: {Distributions.POSITION_DISTRIBUTIONS}")
 
-    Arguments:
-        number (int or float):
-    """
+
+def allowed_velocity_distributions(velocity_distribution):
+    """Checks that the velocity distribution is in the list of allowed distributions"""
+    if velocity_distribution in Distributions.VELOCITY_DISTRIBUTIONS:
+        return velocity_distribution
+    else:
+        raise SchemaError(f"velocity type must be one of: {Distributions.VELOCITY_DISTRIBUTIONS}")
+    
+    
+def strictly_positive(number):
+    """Checks that the number is greater than zero."""
     if number <= 0:
         raise SchemaError("value must be greater than zero")
     return number
 
 
-def reserved_keyword(value):
-    """
-    Allows keywords to be reserved by molecular dynamics drivers where required.
-
-    Arguments:
-        value (str): the name of the keyword to be reserved
-    """
+def reserved_keyword(keyword):
+    """Allows keywords to be reserved by molecular dynamics drivers where required."""
     raise SchemaError("this key has been reserved for internal use")
 
 

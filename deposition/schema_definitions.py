@@ -2,7 +2,7 @@ import os
 
 from schema import And, Optional, Or, Schema, Use
 
-from deposition.schema_validation import allowed_deposition_type, strictly_positive
+from deposition import schema_validation
 
 
 def settings_schema():
@@ -22,8 +22,14 @@ def settings_schema():
         - how far above the surface to add new atoms/molecules
     - deposition_temperature_Kelvin (required, `int` or `float`)
         - temperature of newly added atoms/molecules
-    - minimum_deposition_velocity_metres_per_second (required, `int` or `float`)
-        - set a minimum velocity for added atoms/molecules
+    - velocity_distribution (required, `str`)
+        - name of the method for generating new velocities
+    - velocity_distribution_parameters (list)
+        - settings for the given velocity distribution
+    - position_distribution (required, `str`)
+        - name of the method for generating new positions
+    - position_distribution_parameters (list)
+        - settings for the given position distribution
     - relaxation_time_picoseconds (required, `int` or `float`)
         - duration to simulate the system before the deposition event
     - deposition_time_picoseconds (required, `int` or `float`)
@@ -67,21 +73,24 @@ def settings_schema():
         - raises an error instead of a warning if the structural analysis fails
     """
     return Schema({
-        "deposition_type": And(str, Use(allowed_deposition_type)),
-        "deposition_height_Angstroms": And(Or(int, float), Use(strictly_positive)),
-        "deposition_temperature_Kelvin": And(Or(int, float), Use(strictly_positive)),
-        "minimum_deposition_velocity_metres_per_second": And(Or(int, float), Use(strictly_positive)),
-        "relaxation_time_picoseconds": And(Or(int, float), Use(strictly_positive)),
-        "deposition_time_picoseconds": And(Or(int, float), Use(strictly_positive)),
-        "bonding_distance_cutoff_Angstroms": And(Or(int, float), Use(strictly_positive)),
-        "num_deposited_per_iteration": And(int, Use(strictly_positive)),
-        "maximum_sequential_failures": And(int, Use(strictly_positive)),
-        "maximum_total_iterations": And(int, Use(strictly_positive)),
+        "deposition_type": And(str, Use(schema_validation.allowed_deposition_types)),
+        "deposition_height_Angstroms": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "deposition_temperature_Kelvin": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "velocity_distribution": And(str, Use(schema_validation.allowed_velocity_distributions)),
+        Optional("velocity_distribution_parameters", default=[]): list,
+        "position_distribution": And(str, Use(schema_validation.allowed_position_distributions)),
+        Optional("position_distribution_parameters", default=[]): list,
+        "relaxation_time_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "deposition_time_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "bonding_distance_cutoff_Angstroms": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "num_deposited_per_iteration": And(int, Use(schema_validation.strictly_positive)),
+        "maximum_sequential_failures": And(int, Use(schema_validation.strictly_positive)),
+        "maximum_total_iterations": And(int, Use(schema_validation.strictly_positive)),
         "driver_settings": dict,
         "simulation_cell": dict,
         "substrate_xyz_file": os.path.exists,
         Optional("deposition_element"): str,
-        Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(strictly_positive)),
+        Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(schema_validation.strictly_positive)),
         Optional("molecule_xyz_file"): os.path.exists,
         Optional("log_filename", default="deposition.log"): str,
         Optional("command_prefix", default=""): str,
@@ -104,10 +113,10 @@ def simulation_cell_schema():
         gamma: 90  # degrees
     """
     return Schema({
-        "a": And(Or(int, float), Use(strictly_positive)),
-        "b": And(Or(int, float), Use(strictly_positive)),
-        "c": And(Or(int, float), Use(strictly_positive)),
-        "alpha": And(Or(int, float), Use(strictly_positive)),
-        "beta": And(Or(int, float), Use(strictly_positive)),
-        "gamma": And(Or(int, float), Use(strictly_positive))
+        "a": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "b": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "c": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "alpha": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "beta": And(Or(int, float), Use(schema_validation.strictly_positive)),
+        "gamma": And(Or(int, float), Use(schema_validation.strictly_positive))
     })
