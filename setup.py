@@ -1,21 +1,21 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-with open('README.rst') as file:
+with open("README.rst") as file:
     readme = file.read()
 
-with open('LICENSE') as file:
+with open("LICENSE") as file:
     license = file.read()
 
 setup(
-    name='deposition',
-    version='1.0.0-alpha',
-    description='Molecular dynamics wrapper for deposition simulations',
+    name="deposition",
+    version="1.0.0-alpha",
+    description="Molecular dynamics wrapper for deposition simulations",
     long_description=readme,
-    author='M. J. Cyster',
-    author_email='martincyster@fastmail.com',
-    url='https://github.com/mmtn/deposition',
+    author="M. J. Cyster",
+    author_email="martincyster@fastmail.com",
+    url="https://github.com/mmtn/deposition",
     license=license,
-    packages=find_packages(exclude=('tests', 'docs')),
+    packages=find_packages(exclude=("tests", "docs")),
     install_requires=[
         "click==7.1.2",
         "numpy==1.20.2",
@@ -25,6 +25,5 @@ setup(
         "schema==0.7.4",
         "Shapely==1.7.1",
         "Sphinx==4.2.0",
-    ]
+    ],
 )
-

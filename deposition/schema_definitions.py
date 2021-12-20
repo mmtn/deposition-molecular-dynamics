@@ -3,9 +3,87 @@ import os
 from schema import And, Optional, Or, Schema, Use
 
 from deposition import schema_validation
+from deposition.enums import SettingsEnum, SimulationCellEnum
+
+settings_schema = Schema(
+    {
+        SettingsEnum.BONDING_DISTANCE_CUTOFF.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.DEPOSITION_HEIGHT.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.DEPOSITION_TEMPERATURE.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.DEPOSITION_TIME.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.DEPOSITION_TYPE.value: And(
+            str, Use(schema_validation.allowed_deposition_types)
+        ),
+        SettingsEnum.MAX_SEQUENTIAL_FAILURES.value: And(
+            int, Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.MAX_TOTAL_ITERATIONS.value: And(
+            int, Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.MIN_VELOCITY.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.NUM_DEPOSITED_PER_ITERATION.value: And(
+            int, Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.POSITION_DISTRIBUTION.value: And(
+            str, Use(schema_validation.allowed_position_distributions)
+        ),
+        SettingsEnum.RELAXATION_TIME.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SettingsEnum.DRIVER_SETTINGS.value: dict,
+        SettingsEnum.SIMULATION_CELL.value: dict,
+        SettingsEnum.SUBSTRATE_XYZ_FILE.value: os.path.exists,
+        SettingsEnum.VELOCITY_DISTRIBUTION.value: And(
+            str, Use(schema_validation.allowed_velocity_distributions)
+        ),
+        Optional(SettingsEnum.COMMAND_PREFIX.value, default=""): str,
+        Optional(SettingsEnum.DEPOSITION_ELEMENT.value, default=None): str,
+        Optional(SettingsEnum.LOG_FILENAME.value, default="deposition.log"): str,
+        Optional(SettingsEnum.MOLECULE_XYZ_FILE.value, default=None): os.path.exists,
+        Optional(SettingsEnum.POSITION_DISTRIBUTION_PARAMS.value, default=[]): list,
+        Optional(SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value, default=False): bool,
+        Optional(
+            SettingsEnum.TO_ORIGIN_BEFORE_EACH_ITERATION.value, default=False
+        ): bool,
+        Optional(SettingsEnum.VELOCITY_DISTRIBUTION_PARAMS.value, default=[]): list,
+    }
+)
+
+simulation_cell_schema = Schema(
+    {
+        SimulationCellEnum.A.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SimulationCellEnum.B.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SimulationCellEnum.C.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SimulationCellEnum.ALPHA.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SimulationCellEnum.BETA.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+        SimulationCellEnum.GAMMA.value: And(
+            Or(int, float), Use(schema_validation.strictly_positive)
+        ),
+    }
+)
 
 
-def settings_schema():
+def get_settings_schema():
     """
     A list of the required and optional settings for the simulation. These settings control the type and nature of the
     deposition to be simulated.
@@ -15,7 +93,7 @@ def settings_schema():
 
     List of required settings:
 
-    - deposition_type (required, `string`)
+    - deposition_type (required, `str`)
         - the style of deposition to perform, may activate conditionally required settings (see below)
         - available options: 'monatomic', 'diatomic', 'molecule'
     - deposition_height_Angstroms (required, `int` or `float`)
@@ -38,9 +116,9 @@ def settings_schema():
         - minimum separation for two atoms to be considered bonded
     - num_deposited_per_iteration (required, `int`)
         - number of atoms/molecules added in each iteration
-    - maximum_sequential_failures (required, `int`)
+    - max_sequential_failures (required, `int`)
         - number of failed iterations before the calculation is terminated
-    - maximum_total_iterations (required, `int`)
+    - max_total_iterations (required, `int`)
         - total number of iterations to run before exiting
     - substrate_xyz_file (required, `path`)
         - path to an XYZ file of the initial substrate structures
@@ -72,34 +150,10 @@ def settings_schema():
     - strict_structural_analysis (optional, `bool`, default=False)
         - raises an error instead of a warning if the structural analysis fails
     """
-    return Schema({
-        "deposition_type": And(str, Use(schema_validation.allowed_deposition_types)),
-        "deposition_height_Angstroms": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "deposition_temperature_Kelvin": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "velocity_distribution": And(str, Use(schema_validation.allowed_velocity_distributions)),
-        Optional("velocity_distribution_parameters", default=[]): list,
-        "position_distribution": And(str, Use(schema_validation.allowed_position_distributions)),
-        Optional("position_distribution_parameters", default=[]): list,
-        "relaxation_time_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "deposition_time_picoseconds": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "bonding_distance_cutoff_Angstroms": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "num_deposited_per_iteration": And(int, Use(schema_validation.strictly_positive)),
-        "maximum_sequential_failures": And(int, Use(schema_validation.strictly_positive)),
-        "maximum_total_iterations": And(int, Use(schema_validation.strictly_positive)),
-        "driver_settings": dict,
-        "simulation_cell": dict,
-        "substrate_xyz_file": os.path.exists,
-        Optional("deposition_element"): str,
-        Optional("diatomic_bond_length_Angstroms"): And(Or(int, float), Use(schema_validation.strictly_positive)),
-        Optional("molecule_xyz_file"): os.path.exists,
-        Optional("log_filename", default="deposition.log"): str,
-        Optional("command_prefix", default=""): str,
-        Optional("to_origin_before_each_iteration", default=False): bool,
-        Optional("strict_structural_analysis", default=False): bool,
-    })
+    return settings_schema
 
 
-def simulation_cell_schema():
+def get_simulation_cell_schema():
     """
     Input schema for the parameters which define the periodic cell. Lengths are in Angstroms and angles are in degrees.
 
@@ -112,11 +166,4 @@ def simulation_cell_schema():
         beta: 90  # degrees
         gamma: 90  # degrees
     """
-    return Schema({
-        "a": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "b": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "c": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "alpha": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "beta": And(Or(int, float), Use(schema_validation.strictly_positive)),
-        "gamma": And(Or(int, float), Use(schema_validation.strictly_positive))
-    })
+    return get_simulation_cell_schema

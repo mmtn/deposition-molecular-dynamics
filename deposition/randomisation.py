@@ -2,16 +2,17 @@ import logging
 
 import numpy as np
 
-from deposition import io, physics, structural_analysis, Distributions
+from deposition import distributions, io, physics, structural_analysis
 
 
-def append_new_coordinates_and_velocities(settings, coordinates, elements, velocities, simulation_cell,
-                                          velocity_scaling):
+def new_coordinates_and_velocities(
+    settings, coordinates, elements, velocities, simulation_cell, velocity_scaling
+):
     """
     Randomly generate new atoms based on the deposition settings and add them to the existing structure.
 
     Arguments:
-        settings (dict): settings of the deposition calculation
+        settings: settings of the deposition calculation
         coordinates (np.array): coordinate data
         elements (list of str): atomic species data
         velocities (np.array): velocity data
@@ -24,48 +25,49 @@ def append_new_coordinates_and_velocities(settings, coordinates, elements, veloc
             - elements (list of str): atomic species data
             - velocities (np.array): velocity data
     """
-    num_deposited = settings["num_deposited_per_iteration"]
-    deposition_type = settings["deposition_type"]
-    deposition_temperature = settings["deposition_temperature_Kelvin"]
-    minimum_velocity = settings["minimum_deposition_velocity_metres_per_second"]
-
-    surface_height = structural_analysis.get_surface_height(simulation_cell, coordinates)
-    new_z_position = surface_height + settings["deposition_height_Angstroms"]
-    polygon_coordinates = get_polygon_on_plane(simulation_cell, new_z_position)
-    velocity_distribution = Distributions.get_velocity_distribution(
-        settings["velocity_distribution"],
-        settings["velocity_distribution_arguments"],
+    surface_height = structural_analysis.get_surface_height(
+        simulation_cell, coordinates
     )
-    position_distribution = Distributions.get_position_distribution(
-        settings["position_distribution"],
-        settings["position_distribution_arguments"],
+    new_z_position = surface_height + settings.deposition_height
+    polygon_coordinates = get_polygon_on_plane(simulation_cell, new_z_position)
+    velocity_distribution = distributions.get_velocity_distribution(
+        settings.velocity_distribution,
+        settings.velocity_distribution_parameters,
+    )
+    position_distribution = distributions.get_position_distribution(
+        settings.position_distribution,
+        settings.position_distribution_parameters,
         polygon_coordinates,
         new_z_position,
     )
 
     logging.info(f"generating coordinates and velocities for deposited atom(s)")
-    for ii in range(num_deposited):
-        if deposition_type == "monatomic":
+    for ii in range(settings.num_deposited_per_iteration):
+        if settings.deposition_type == "monatomic":
             deposition_coordinates = [0, 0, 0]
-            deposition_elements = settings["deposition_element"]
-        elif deposition_type == "molecule":
-            deposition_coordinates, deposition_elements, _ = io.read_xyz(settings["molecule_xyz_file"])
+            deposition_elements = [settings.deposition_element]
+        elif settings.deposition_type == "molecule":
+            deposition_coordinates, deposition_elements, _ = io.read_xyz(
+                settings.molecule_xyz_file
+            )
         else:
-            raise ValueError(f"unknown deposition type: {deposition_type}")
+            raise ValueError(f"unknown deposition type: {settings.deposition_type}")
 
-        coordinates_new = get_new_positions(position_distribution, deposition_coordinates)
-        velocities_new = get_new_velocities(
+        new_coordinates = get_new_positions(
+            position_distribution, deposition_coordinates
+        )
+        new_elements = deposition_elements
+        new_velocities = get_new_velocities(
             velocity_distribution,
             deposition_coordinates,
             deposition_elements,
-            deposition_temperature,
-            minimum_velocity,
+            settings.deposition_temperature,
+            settings.min_velocity,
         )
-        elements_new = deposition_elements
 
-        coordinates = np.vstack((coordinates, coordinates_new))
-        elements = elements + elements_new
-        velocities = np.vstack((velocities, velocities_new * velocity_scaling))
+        coordinates = np.vstack((coordinates, new_coordinates))
+        elements = elements + new_elements
+        velocities = np.vstack((velocities, new_velocities * velocity_scaling))
 
     return coordinates, elements, velocities
 
@@ -85,8 +87,14 @@ def get_polygon_on_plane(simulation_cell, z_plane):
     base_polygon_coordinates = [
         (simulation_cell["x_min"], simulation_cell["y_min"]),
         (simulation_cell["x_max"], simulation_cell["y_min"]),
-        (simulation_cell["x_max"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
-        (simulation_cell["x_min"] + simulation_cell["tilt_xy"], simulation_cell["y_max"]),
+        (
+            simulation_cell["x_max"] + simulation_cell["tilt_xy"],
+            simulation_cell["y_max"],
+        ),
+        (
+            simulation_cell["x_min"] + simulation_cell["tilt_xy"],
+            simulation_cell["y_max"],
+        ),
     ]
     relative_height = z_plane / (simulation_cell["z_max"] - simulation_cell["z_min"])
     relative_shift = simulation_cell["z_vector"] * relative_height
@@ -101,7 +109,7 @@ def random_velocity(velocity_distribution, minimum_velocity, max_iterations=1000
     Arguments:
         velocity_distribution: functional form for obtaining the new velocity
         minimum_velocity (float): minimum bound on the generated velocity (m/s)
-        max_iterations (int): upper bound when trying to get a velocity under `minimum_velocity`
+        max_iterations (int): upper bound when trying to get a velocity under `min_velocity`
 
     Returns:
         new_velocity (np.array): velocity of the newly added particle(s)
@@ -134,20 +142,27 @@ def get_new_positions(position_distribution, molecule_coordinates):
     return new_coordinates
 
 
-def get_new_velocities(velocity_distribution, coordinates, elements, temperature, minimum_velocity):
+def get_new_velocities(
+    velocity_distribution, coordinates, elements, temperature, minimum_velocity
+):
     """
     Randomly generate the velocity of the newly added molecule based on the kinetic temperature and mass. All atoms in
     the molecule are given identical velocities.
 
     Arguments:
         velocity_distribution: functional form for obtaining the new velocity
+        coordinates (np.array): coordinate data
+        elements (list of str): atomic species data
+        temperature (float): deposition temperature in Kelvin
         minimum_velocity (float): minimum bound on the generated velocity (m/s)
 
     Returns:
         velocities (np.array): velocities of the atoms in the deposited atom/molecule
     """
     translational_velocity = random_velocity(velocity_distribution, minimum_velocity)
-    translational_velocities = np.repeat(np.atleast_2d(translational_velocity), repeats=len(elements), axis=0)
+    translational_velocities = np.repeat(
+        np.atleast_2d(translational_velocity), repeats=len(elements), axis=0
+    )
     if len(elements) == 1:  # or add_rotation == False:
         return translational_velocities
 
@@ -156,11 +171,15 @@ def get_new_velocities(velocity_distribution, coordinates, elements, temperature
     distances = [np.subtract(coordinate, centre_of_mass) for coordinate in coordinates]
     rotational_velocities = [
         physics.velocity_from_normal_distribution(temperature, moment_of_inertia)
-        if moment_of_inertia > 0 else 0 for moment_of_inertia in moment_of_inertia_xyz
+        if moment_of_inertia > 0
+        else 0
+        for moment_of_inertia in moment_of_inertia_xyz
     ]
     tangential_velocities = [rotational_velocities * distance for distance in distances]
     velocities = [
         translational + tangential
-        for translational, tangential in zip(translational_velocities, tangential_velocities)
+        for translational, tangential in zip(
+            translational_velocities, tangential_velocities
+        )
     ]
     return velocities

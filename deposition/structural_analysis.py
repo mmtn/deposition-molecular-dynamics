@@ -39,8 +39,7 @@ def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box_to_sea
     lz = simulation_cell["z_max"] - simulation_cell["z_min"]
     cutoff = lz * (percentage_of_box_to_search / 100)
     return [
-        coordinates[ii] - simulation_cell["z_vector"]
-        if z > cutoff else coordinates[ii]
+        coordinates[ii] - simulation_cell["z_vector"] if z > cutoff else coordinates[ii]
         for ii, (x, y, z) in enumerate(coordinates)
     ]
 
@@ -69,7 +68,9 @@ def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutof
     return neighbour_list
 
 
-def check_minimum_neighbours(simulation_cell, coordinates, num_deposited_atoms, bonding_distance_cutoff):
+def check_minimum_neighbours(
+    simulation_cell, coordinates, num_deposited_atoms, bonding_distance_cutoff
+):
     """
     Assess the number of neighbours of all simulated atoms to check that everything is bonded together and there are not
     multiple isolated regions.
@@ -80,7 +81,9 @@ def check_minimum_neighbours(simulation_cell, coordinates, num_deposited_atoms, 
         num_deposited_atoms (int): how many atoms are deposited in each iteration
         bonding_distance_cutoff (float): distance below which to consider atoms bonded (Angstroms)
     """
-    neighbour_list = generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff)
+    neighbour_list = generate_neighbour_list(
+        simulation_cell, coordinates, bonding_distance_cutoff
+    )
     if np.any(np.less_equal(neighbour_list, num_deposited_atoms)):
         raise RuntimeWarning("one or more atoms has too few neighbouring atoms")
 

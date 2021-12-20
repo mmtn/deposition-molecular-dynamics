@@ -17,7 +17,10 @@ def get_random_point_in_polygon(polygon_coordinates):
     polygon = mplpath.Path(polygon_coordinates)
     bbox = polygon.get_extents()
     while True:
-        point = (np.random.uniform(bbox.xmin, bbox.xmax), np.random.uniform(bbox.ymin, bbox.ymax))
+        point = (
+            np.random.uniform(bbox.xmin, bbox.xmax),
+            np.random.uniform(bbox.ymin, bbox.ymax),
+        )
         if polygon.contains_point(point):
             return point[0], point[1]
 

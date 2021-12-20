@@ -1,2 +1,2 @@
-from .GULPDriver import GULPDriver
-from .LAMMPSDriver import LAMMPSDriver
+from .gulp_driver import GULPDriver
+from .lammps_driver import LAMMPSDriver

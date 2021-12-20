@@ -3,7 +3,7 @@ import re
 
 from schema import SchemaError
 
-from deposition import Distributions
+from deposition import distributions
 
 DEPOSITION_TYPES = {
     "monatomic": ["deposition_element"],
@@ -22,20 +22,24 @@ def allowed_deposition_types(deposition_type):
 
 def allowed_position_distributions(position_distribution):
     """Checks that the position distribution is in the list of allowed distributions"""
-    if position_distribution in Distributions.POSITION_DISTRIBUTIONS:
+    if position_distribution in distributions.POSITION_DISTRIBUTIONS:
         return position_distribution
     else:
-        raise SchemaError(f"position type must be one of: {Distributions.POSITION_DISTRIBUTIONS}")
+        raise SchemaError(
+            f"position type must be one of: {distributions.POSITION_DISTRIBUTIONS}"
+        )
 
 
 def allowed_velocity_distributions(velocity_distribution):
     """Checks that the velocity distribution is in the list of allowed distributions"""
-    if velocity_distribution in Distributions.VELOCITY_DISTRIBUTIONS:
+    if velocity_distribution in distributions.VELOCITY_DISTRIBUTIONS:
         return velocity_distribution
     else:
-        raise SchemaError(f"velocity type must be one of: {Distributions.VELOCITY_DISTRIBUTIONS}")
-    
-    
+        raise SchemaError(
+            f"velocity type must be one of: {distributions.VELOCITY_DISTRIBUTIONS}"
+        )
+
+
 def strictly_positive(number):
     """Checks that the number is greater than zero."""
     if number <= 0:
@@ -76,7 +80,9 @@ def check_input_file_syntax(driver):
     # check that all internal keywords are present in the template
     for key in reserved_keywords:
         if key not in template_keys:
-            raise SchemaError(f"key '{key} is used internally by {driver.name} and must be present in the template")
+            raise SchemaError(
+                f"key '{key} is used internally by {driver.name} and must be present in the template"
+            )
 
     # check that the template keys are populated by the input settings
     for key in template_keys:
@@ -85,7 +91,9 @@ def check_input_file_syntax(driver):
         elif key in reserved_keywords:  # ignore reserved keywords
             continue
         elif key not in driver.settings.keys():  # unknown key
-            raise SchemaError(f"unknown key '{key}' present in input template but has no set value")
+            raise SchemaError(
+                f"unknown key '{key}' present in input template but has no set value"
+            )
 
     # check for leftover keys in the input settings that are not used in the template or elsewhere
     unused_keys = list()

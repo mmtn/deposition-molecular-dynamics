@@ -22,13 +22,13 @@ def start_logging(log_filename):
     Arguments:
         log_filename (path): where to write the log file
     """
-    logger = logging.getLogger('')
+    logger = logging.getLogger("")
     logger.setLevel(logging.INFO)
     log_to_file = logging.FileHandler(log_filename)
     log_to_stdout = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
         "[%(asctime)s] %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s",
-        datefmt="%a %d %b %Y %H:%M:%S"
+        datefmt="%a %d %b %Y %H:%M:%S",
     )
     log_to_file.setFormatter(formatter)
     log_to_stdout.setFormatter(formatter)
@@ -50,11 +50,15 @@ def make_directories(directory_names):
             os.mkdir(name)
             logging.info(f"created directory '{name}'")
         except FileExistsError as error:
-            logging.warning(f"directory '{name}' already exists, check for existing data before proceeding")
+            logging.warning(
+                f"directory '{name}' already exists, check for existing data before proceeding"
+            )
             data_is_present = True
 
     if data_is_present:
-        raise FileExistsError(f"remove the following directories to proceed: {list(directories.values())}")
+        raise FileExistsError(
+            f"remove the following directories to proceed: {list(directories.values())}"
+        )
 
 
 def throw_away_lines(iterator, n):
@@ -164,10 +168,6 @@ def write_state(coordinates, elements, velocities, pickle_location):
         pickle_location (path): path to save the pickled data to
     """
     logging.info(f"writing state to {pickle_location}")
-    data = {
-        "coordinates": coordinates,
-        "elements": elements,
-        "velocities": velocities
-    }
+    data = {"coordinates": coordinates, "elements": elements, "velocities": velocities}
     with open(pickle_location, "wb") as file:
         pickle.dump(data, file)
