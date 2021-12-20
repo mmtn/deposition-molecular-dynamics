@@ -53,7 +53,7 @@ class Deposition:
             pickle_location="initial_positions.pickle",
         )
         state = io.read_xyz(self.settings.substrate_xyz_file)
-        io.write_state(state, self.status.pickle_location, include_velocities=False)
+        state.write(self.status.pickle_location, include_velocities=False)
         io.make_directories(tuple(io.directories.values()))
         self.write_status()
 

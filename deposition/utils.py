@@ -1,4 +1,3 @@
-import importlib
 import logging
 
 import numpy as np
@@ -6,7 +5,7 @@ import yaml
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
-from deposition import drivers, schema_definitions, schema_validation, enums
+from deposition import drivers, enums, schema_definitions, schema_validation
 
 
 def get_simulation_cell(simulation_cell):

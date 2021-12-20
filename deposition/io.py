@@ -92,7 +92,7 @@ def read_xyz(xyz_file, step=None):
         equal to 1
 
     Returns:
-        state
+        state: coordinates, elements, velocities
     """
     # Get the number of lines in the file and the number of atoms
     header_lines_per_step = 2
@@ -151,33 +151,9 @@ def read_state(pickle_location):
         pickle_location (path): path read the pickled data from
 
     Returns:
-        coordinates, elements, velocities (tuple)
-            - coordinates (np.array): coordinate data
-            - elements (list of str): atomic species data
-            - velocities (np.array): velocity data
+        state: coordinates, elements, velocities
     """
     logging.info(f"reading state from {pickle_location}")
     with open(pickle_location, "rb") as file:
         data = pickle.load(file)
     return State(data["coordinates"], data["elements"], data["velocities"])
-
-
-def write_state(state, pickle_location, include_velocities=True):
-    """
-    Writes current state of calculation to pickle file. The pickle file stores the
-    coordinates, species (elements),
-    and velocities of all simulated atoms.
-
-    Arguments:
-        state:
-        pickle_location (path): path to save the pickled data to
-        include_velocities:
-    """
-    data = {
-        "coordinates": state.coordinates,
-        "elements": state.elements,
-        "velocities": state.velocities if include_velocities else None,
-    }
-    logging.info(f"writing state to {pickle_location}")
-    with open(pickle_location, "wb") as file:
-        pickle.dump(data, file)

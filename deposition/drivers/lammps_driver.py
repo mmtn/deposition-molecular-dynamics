@@ -5,6 +5,7 @@ from schema import And, Optional, Or, Use
 
 from deposition import io, schema_validation
 from deposition.drivers.molecular_dynamics_driver import MolecularDynamicsDriver
+from deposition.state import State
 
 
 class LAMMPSDriver(MolecularDynamicsDriver):
@@ -58,17 +59,13 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             reserved_keywords=self.reserved_keywords,
         )
 
-    def write_inputs(
-        self, filename, coordinates, elements, velocities, iteration_stage
-    ):
+    def write_inputs(self, filename, state, iteration_stage):
         """
         Write LAMMPS input file and input system data to run the next part of the deposition calculation.
 
         Arguments:
             filename (str): name to use for input files
-            coordinates (np.array): coordinate data
-            elements (list): atomic species data
-            velocities (np.array): velocity data
+            state: coordinates, elements, velocities
             iteration_stage (str): either "relaxation" or "deposition"
         """
         input_filename = f"{filename}.input"
@@ -100,15 +97,15 @@ class LAMMPSDriver(MolecularDynamicsDriver):
 
         # Convert from string labels to number labels where required, + 1 because of zero-indexing
         list_of_elements_in_potential = self.settings["elements_in_potential"].split()
-        for element_index, element in enumerate(elements):
+        for element_index, element in enumerate(state.elements):
             if element in list_of_elements_in_potential:
-                elements[element_index] = (
+                state.elements[element_index] = (
                     list_of_elements_in_potential.index(element) + 1
                 )
-        element_integers = [int(element) for element in elements]
+        element_integers = [int(element) for element in state.elements]
 
         # Set up indices for pandas dataframes
-        atom_indices = range(1, len(elements) + 1)
+        atom_indices = range(1, len(state.elements) + 1)
         mass_indices = range(1, len(self.settings["atomic_masses"]) + 1)
 
         # Create LammpsData object from system information
@@ -116,13 +113,13 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             self.settings["atomic_masses"], index=mass_indices, columns=["mass"]
         )
         charges_dataframe = pd.DataFrame(
-            np.zeros(((len(elements)), 1)), index=atom_indices, columns=["q"]
+            np.zeros(((len(state.elements)), 1)), index=atom_indices, columns=["q"]
         )
         elements_dataframe = pd.DataFrame(
             element_integers, index=atom_indices, columns=["type"]
         )
         coordinates_dataframe = pd.DataFrame(
-            coordinates, index=atom_indices, columns=["x", "y", "z"]
+            state.coordinates, index=atom_indices, columns=["x", "y", "z"]
         )
         combined_atomic_dataframe = pd.concat(
             (elements_dataframe, charges_dataframe, coordinates_dataframe), axis=1
@@ -135,10 +132,10 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             atom_style="charge",
         )
 
-        # Maintain atomic velocities between relaxation and deposition stages of each iteration
+        # Maintain atomic velocities between relaxation and deposition stages
         if iteration_stage == "deposition":
             lammps_data_object.velocities = pd.DataFrame(
-                velocities, index=atom_indices, columns=["vx", "vy", "vz"]
+                state.velocities, index=atom_indices, columns=["vx", "vy", "vz"]
             )
 
         lammps_data_object.write_file(input_data_filename)
@@ -152,13 +149,10 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             filename (str): basename to use for reading output files
 
         Returns:
-            coordinates, elements, velocities (tuple)
-                - coordinates (np.array): coordinate data
-                - elements (list): atomic species data
-                - velocities (np.array): velocity data
+            state: coordinates, elements, velocities
         """
         data = LammpsData.from_file(f"{filename}.output_data", atom_style="charge")
         coordinates = data.atoms[["x", "y", "z"]].to_numpy()
         elements = data.atoms["type"].to_list()
         velocities = data.velocities.to_numpy()
-        return coordinates, elements, velocities
+        return State(coordinates, elements, velocities)

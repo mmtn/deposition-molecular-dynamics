@@ -66,13 +66,12 @@ class Iteration:
         self.driver.write_inputs(self.relaxation_filename, state, "relaxation")
         self.call_process(self.relaxation_filename)
         state = self.driver.read_outputs(self.relaxation_filename)
-        io.write_state(state, f"{self.relaxation_filename}.pickle")
+        state.write(f"{self.relaxation_filename}.pickle")
 
     def deposition(self):
         """Runs the deposition phase of the iteration including the random addition
         of new atoms/molecules."""
         state = io.read_state(f"{self.relaxation_filename}.pickle")
-        # TODO: create class to contain coordinates, elements, and velocities (state)
         state = randomisation.new_coordinates_and_velocities(
             self.settings,
             state,
@@ -82,9 +81,7 @@ class Iteration:
         self.driver.write_inputs(self.deposition_filename, state, "deposition")
         self.call_process(self.deposition_filename)
         state = self.driver.read_outputs(self.deposition_filename)
-        io.write_state(
-            state, f"{self.deposition_filename}.pickle", include_velocities=False
-        )
+        state.write(f"{self.deposition_filename}.pickle", include_velocities=False)
 
     def finalisation(self):
         """Finalises the iteration by running structural analysis and moving the data
@@ -137,8 +134,7 @@ class Iteration:
         - if new atoms have bonded to the periodic copy of the substrate
 
         Arguments:
-            coordinates (np.array): coordinates from the final state of the deposition
-            elements (list): elements from the final state of the deposition
+            state: coordinates, elements, velocities
         """
         if self.settings.deposition_type == "monatomic":
             num_deposited_atoms = self.settings.num_deposited_per_iteration
