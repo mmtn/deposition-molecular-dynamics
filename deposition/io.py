@@ -10,11 +10,7 @@ import numpy as np
 
 from deposition.state import State
 
-directories = {
-    "working_dir": "current",
-    "success_dir": "iterations",
-    "failure_dir": "failed",
-}
+directories = dict(working="current", success="iterations", failure="failed")
 
 
 def start_logging(log_filename):
@@ -54,8 +50,7 @@ def make_directories(directory_names):
             logging.info(f"created directory '{name}'")
         except FileExistsError as error:
             logging.warning(
-                f"directory '{name}' already exists, check for existing data before "
-                f"proceeding"
+                f"directory '{name}' already exists, check for existing data"
             )
             raise FileExistsError(
                 f"remove the following directories to proceed: "

@@ -7,9 +7,6 @@ from deposition.enums import SettingsEnum, SimulationCellEnum
 
 settings_schema = Schema(
     {
-        SettingsEnum.BONDING_DISTANCE_CUTOFF.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
         SettingsEnum.DEPOSITION_HEIGHT.value: And(
             Or(int, float), Use(schema_validation.strictly_positive)
         ),
@@ -53,9 +50,6 @@ settings_schema = Schema(
         Optional(SettingsEnum.POSITION_DISTRIBUTION_PARAMS.value, default=[]): list,
         Optional(SettingsEnum.POSTPROCESSING.value, default=None): dict,
         Optional(SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value, default=False): bool,
-        Optional(
-            SettingsEnum.TO_ORIGIN_BEFORE_EACH_ITERATION.value, default=False
-        ): bool,
         Optional(SettingsEnum.VELOCITY_DISTRIBUTION_PARAMS.value, default=[]): list,
     }
 )

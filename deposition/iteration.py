@@ -30,12 +30,13 @@ class Iteration:
         self.iteration_number = iteration_number
         self.pickle_location = pickle_location
         self.deposition_filename = os.path.join(
-            io.directories["working_dir"], f"deposition{self.iteration_number:03d}"
+            io.directories["working"], f"deposition{self.iteration_number:03d}"
         )
         self.relaxation_filename = os.path.join(
-            io.directories["working_dir"], f"relaxation{self.iteration_number:03d}"
+            io.directories["working"], f"relaxation{self.iteration_number:03d}"
         )
         self.success = False
+        self.state = None
 
     def run(self):
         """
@@ -58,54 +59,46 @@ class Iteration:
     def relaxation(self):
         """Runs the relaxation phase of the iteration."""
         state = io.read_state(self.pickle_location)
-        if self.settings.to_origin_before_each_iteration:
-            wrapped = structural_analysis.wrap_coordinates_in_z(
-                self.driver.simulation_cell, state.coordinates
-            )
-            coordinates = structural_analysis.reset_to_origin(wrapped)
         self.driver.write_inputs(self.relaxation_filename, state, "relaxation")
         self.call_process(self.relaxation_filename)
-        state = self.driver.read_outputs(self.relaxation_filename)
-        state.write(f"{self.relaxation_filename}.pickle")
+        self.state = self.driver.read_outputs(self.relaxation_filename)
 
     def deposition(self):
         """Runs the deposition phase of the iteration including the random addition
         of new atoms/molecules."""
-        state = io.read_state(f"{self.relaxation_filename}.pickle")
-        state = randomisation.new_coordinates_and_velocities(
+        self.state = randomisation.new_coordinates_and_velocities(
             self.settings,
-            state,
+            self.state,
             self.driver.simulation_cell,
             self.driver.settings["velocity_scaling_from_metres_per_second"],
         )
-        self.driver.write_inputs(self.deposition_filename, state, "deposition")
+        self.driver.write_inputs(self.deposition_filename, self.state, "deposition")
         self.call_process(self.deposition_filename)
-        state = self.driver.read_outputs(self.deposition_filename)
-        state.write(f"{self.deposition_filename}.pickle", include_velocities=False)
+        self.state = self.driver.read_outputs(self.deposition_filename)
 
     def finalisation(self):
         """Finalises the iteration by running structural analysis and moving the data
         to the appropriate directory"""
-        state = io.read_state(f"{self.deposition_filename}.pickle")
-        self.check_outcome(state, self.driver.simulation_cell)
+        self.run_postprocessing()
+        self.state.write(f"{self.deposition_filename}.pickle", include_velocities=False)
         if self.success:
             destination_directory = os.path.join(
-                io.directories["success_dir"], f"{self.iteration_number:03d}/"
+                io.directories["success"], f"{self.iteration_number:03d}/"
             )
             self.pickle_location = os.path.join(
                 destination_directory, f"deposition{self.iteration_number:03d}.pickle"
             )
         else:
             destination_directory = os.path.join(
-                io.directories["failure_dir"], f"{self.iteration_number:03d}/"
+                io.directories["failure"], f"{self.iteration_number:03d}/"
             )
         logging.info(
             f"moving data for iteration {self.iteration_number} to "
             f"{destination_directory}"
         )
-        shutil.copytree(io.directories["working_dir"], destination_directory)
-        shutil.rmtree(io.directories["working_dir"])
-        os.mkdir(io.directories["working_dir"])
+        shutil.copytree(io.directories["working"], destination_directory)
+        shutil.rmtree(io.directories["working"])
+        os.mkdir(io.directories["working"])
 
     def call_process(self, filename):
         """
@@ -125,29 +118,24 @@ class Iteration:
         logging.info(f"running: {command}")
         subprocess.run(command, shell=True, check=True)
 
-    def check_outcome(self, state, simulation_cell):
+    def run_postprocessing(self):
         """
-        Runs a structural analysis of the final state of the deposition phase.
-        Currently we check whether:
-
-        - each atom has at least the required minimum number of neighbours
-        - if new atoms have bonded to the periodic copy of the substrate
-
-        Arguments:
-            state: coordinates, elements, velocities
-            simulation_cell:
+        Runs postprocessing routines on the final state of the deposition phase.
         """
 
-        logging.info("running post processing checks")
+        logging.info("running post processing")
 
         try:
-            for name, args in self.settings.postprocessing:
-                postprocessing.run_check(name, args, state, simulation_cell)
+            for name, args in self.settings.postprocessing.items():
+                logging.info(f"- {name}")
+                self.state = postprocessing.run(
+                    name, args, self.state, self.settings.simulation_cell
+                )
             self.success = True
 
         except RuntimeWarning as warning:
             logging.warning("post-processing check failed")
             logging.warning(warning)
-            if self.settings["strict_structural_analysis"]:
+            if self.settings.strict_structural_analysis:
                 raise RuntimeError(warning)
             self.success = False

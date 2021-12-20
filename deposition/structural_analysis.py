@@ -41,11 +41,3 @@ def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box=80):
         coordinates[ii] - simulation_cell["z_vector"] if z > cutoff else coordinates[ii]
         for ii, (x, y, z) in enumerate(coordinates)
     ]
-
-
-def reset_to_origin(coordinates):
-    """Moves the given coordinates back to the origin at (0, 0, 0)"""
-
-    minima = np.min(coordinates, axis=0)
-    shifted_coordinates = np.subtract(coordinates, minima)
-    return shifted_coordinates

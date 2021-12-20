@@ -6,9 +6,6 @@ class Settings:
     """Class to hold all settings for the deposition calculation"""
 
     def __init__(self, settings):
-        self.bonding_distance_cutoff = settings[
-            SettingsEnum.BONDING_DISTANCE_CUTOFF.value
-        ]
         self.command_prefix = settings[SettingsEnum.COMMAND_PREFIX.value]
         self.deposition_element = settings[SettingsEnum.DEPOSITION_ELEMENT.value]
         self.deposition_height = settings[SettingsEnum.DEPOSITION_HEIGHT.value]
@@ -39,9 +36,6 @@ class Settings:
             SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value
         ]
         self.substrate_xyz_file = settings[SettingsEnum.SUBSTRATE_XYZ_FILE.value]
-        self.to_origin_before_each_iteration = settings[
-            SettingsEnum.TO_ORIGIN_BEFORE_EACH_ITERATION.value
-        ]
         self.velocity_distribution = settings[SettingsEnum.VELOCITY_DISTRIBUTION.value]
         self.velocity_distribution_parameters = settings[
             SettingsEnum.VELOCITY_DISTRIBUTION_PARAMS.value
@@ -76,4 +70,4 @@ class Settings:
         # check that the postprocessing options are valid
         if self.postprocessing is not None:
             for name, args in self.postprocessing.items():
-                postprocessing.run_check(name, args, None, None, dry_run=True)
+                postprocessing.run(name, args, None, None, dry_run=True)

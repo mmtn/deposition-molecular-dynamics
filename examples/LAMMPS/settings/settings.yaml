@@ -8,14 +8,14 @@ num_deposited_per_iteration: 1
 relaxation_time_picoseconds: 0.1
 deposition_time_picoseconds: 0.4
 substrate_xyz_file: settings/substrate.xyz
-bonding_distance_cutoff_Angstroms: 4
 max_sequential_failures: 5
 max_total_iterations: 10
 position_distribution: uniform
 velocity_distribution: gaussian
 velocity_distribution_parameters: [300, 1e-25, 0]  # temperature, atom weight, centre
 postprocessing:
-    num_neighbours: [2, 4]  # min num neighbours, bonding distance
+    num_neighbours: [1, 9]  # min num neighbours, bonding distance
+    shift_to_origin: 1
 
 # 2. Driver settings
 driver_settings:

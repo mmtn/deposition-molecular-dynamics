@@ -1,9 +1,12 @@
 import numpy as np
 
-from deposition.utils import generate_neighbour_list
+import deposition.utils
+from deposition.state import State
+from deposition.structural_analysis import wrap_coordinates_in_z
+from deposition.utils import generate_neighbour_list, get_simulation_cell
 
 
-def run_check(name, arguments, state, simulation_cell, dry_run=False):
+def run(name, arguments, state, simulation_cell, dry_run=False):
     """
     Runs the postprocessing check on the provided structural data.
 
@@ -15,12 +18,14 @@ def run_check(name, arguments, state, simulation_cell, dry_run=False):
         dry_run: optionally skip the actual check (for validation at initialisation)
     """
     if name == "num_neighbours":
-        check = NumNeighboursCheck(arguments, state, simulation_cell)
+        routine = NumNeighboursCheck(arguments, state, simulation_cell)
+    elif name == "shift_to_origin":
+        routine = ShiftToOrigin(arguments, state, simulation_cell)
     else:
-        raise ValueError(f"unknown post processing check {name}")
+        raise ValueError(f"unknown post processing routine {name}")
 
     if not dry_run:
-        check.run()
+        return routine.run()
 
 
 class NumNeighboursCheck:
@@ -32,9 +37,9 @@ class NumNeighboursCheck:
     num_arguments = 2
 
     def __init__(self, arguments, state, simulation_cell):
-        assert (
-            len(arguments) == self.num_arguments
-        ), f"{self.__class__} requires {self.num_arguments} argument(s)"
+        assert len(arguments) == self.num_arguments, (
+            f"{self.__class__} requires {self.num_arguments} argument(s)"
+        )
         self.min_neighbours = float(arguments[0])
         self.bonding_cutoff = float(arguments[1])
         self.state = state
@@ -46,3 +51,25 @@ class NumNeighboursCheck:
         )
         if np.any(np.less_equal(neighbour_list, self.min_neighbours)):
             raise RuntimeWarning("one or more atoms has too few neighbouring atoms")
+        return self.state
+
+
+class ShiftToOrigin:
+    """
+    Assess the number of neighbours of all simulated atoms to check that
+    everything is
+    bonded together and there are no isolated regions.
+    """
+
+    def __init__(self, arguments, state, simulation_cell):
+        assert arguments == True, "to turn on this routine, use shift_to_origin: True"
+        self.state = state
+        self.simulation_cell = simulation_cell
+
+    def run(self):
+        """Moves the given coordinates back to the origin at (0, 0, 0)"""
+        full_simulation_cell = get_simulation_cell(self.simulation_cell)
+        wrapped = wrap_coordinates_in_z(full_simulation_cell, self.state.coordinates)
+        minima = np.min(wrapped, axis=0)
+        shifted_coordinates = np.subtract(wrapped, minima)
+        return State(shifted_coordinates, self.state.elements, self.state.velocities)
