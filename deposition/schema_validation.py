@@ -1,7 +1,7 @@
 import logging
 import re
 
-from schema import SchemaError
+from schema import SchemaError, Optional
 
 from deposition import distributions
 
@@ -95,10 +95,11 @@ def check_input_file_syntax(driver):
                 f"unknown key '{key}' present in input template but has no set value"
             )
 
-    # check for leftover keys in the input settings that are not used in the template or elsewhere
+    # check for leftover keys in the input settings that are not used in the template
+    schema_keys = [k.schema if type(k) is Optional else k for k in driver.schema.schema]
     unused_keys = list()
     for key in driver.settings:
-        if key not in template_keys and key not in driver.schema.schema:
+        if key not in template_keys and key not in schema_keys:
             unused_keys.append(key)
     if len(unused_keys) > 0:
         logging.warning("unused keys detected in input file:")
