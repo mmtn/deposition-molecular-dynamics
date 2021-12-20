@@ -4,6 +4,7 @@ import pickle
 
 class State:
     """Store coordinates, elements, and velocities for a set of atoms"""
+
     def __init__(self, coordinates, elements, velocities):
         self.coordinates = coordinates
         self.elements = elements
@@ -11,12 +12,11 @@ class State:
 
     def write(self, pickle_location, include_velocities=True):
         """
-        Writes current state of calculation to pickle file. The pickle file stores the
-        coordinates, species (elements), and velocities of all simulated atoms.
+        Write current state to a pickle file.
 
         Arguments:
             pickle_location (path): path to save the pickled data to
-            include_velocities (bool): save velocities or not
+            include_velocities (bool): whether to save velocities or not
         """
         data = {
             "coordinates": self.coordinates,

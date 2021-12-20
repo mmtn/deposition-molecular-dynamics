@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from string import Template
 
-from deposition import io, randomisation, structural_analysis
+from deposition import io, postprocessing, randomisation, structural_analysis
 
 
 class Iteration:
@@ -87,7 +87,7 @@ class Iteration:
         """Finalises the iteration by running structural analysis and moving the data
         to the appropriate directory"""
         state = io.read_state(f"{self.deposition_filename}.pickle")
-        self.check_outcome(state)
+        self.check_outcome(state, self.driver.simulation_cell)
         if self.success:
             destination_directory = os.path.join(
                 io.directories["success_dir"], f"{self.iteration_number:03d}/"
@@ -125,7 +125,7 @@ class Iteration:
         logging.info(f"running: {command}")
         subprocess.run(command, shell=True, check=True)
 
-    def check_outcome(self, state):
+    def check_outcome(self, state, simulation_cell):
         """
         Runs a structural analysis of the final state of the deposition phase.
         Currently we check whether:
@@ -135,25 +135,16 @@ class Iteration:
 
         Arguments:
             state: coordinates, elements, velocities
+            simulation_cell:
         """
-        if self.settings.deposition_type == "monatomic":
-            num_deposited_atoms = self.settings.num_deposited_per_iteration
-        elif self.settings.deposition_type == "molecule":
-            molecule = io.read_xyz(self.settings.molecule_xyz_file)
-            num_deposited_atoms = (
-                len(molecule.elements) * self.settings.num_deposited_per_iteration
-            )
 
-        logging.info("running structural analyses to check outcome")
+        logging.info("running post processing checks")
+
         try:
-            structural_analysis.check_minimum_neighbours(
-                self.settings.simulation_cell,
-                state.coordinates,
-                num_deposited_atoms,
-                self.settings.bonding_distance_cutoff,
-            )
-
+            for name, args in self.settings.postprocessing:
+                postprocessing.run_check(name, args, state, simulation_cell)
             self.success = True
+
         except RuntimeWarning as warning:
             logging.warning("post-processing check failed")
             logging.warning(warning)

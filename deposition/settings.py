@@ -1,4 +1,4 @@
-from deposition import distributions, schema_validation
+from deposition import distributions, postprocessing, schema_validation
 from deposition.enums import SettingsEnum
 
 
@@ -32,6 +32,7 @@ class Settings:
         self.position_distribution_parameters = settings[
             SettingsEnum.POSITION_DISTRIBUTION_PARAMS.value
         ]
+        self.postprocessing = settings[SettingsEnum.POSTPROCESSING.value]
         self.relaxation_time = settings[SettingsEnum.RELAXATION_TIME.value]
         self.simulation_cell = settings[SettingsEnum.SIMULATION_CELL.value]
         self.strict_structural_analysis = settings[
@@ -53,13 +54,12 @@ class Settings:
             settings:
         """
         # check that required options for the deposition type are present
-        print(self.deposition_type)
         for requirement in schema_validation.DEPOSITION_TYPES[self.deposition_type]:
             assert (
                 requirement in settings.keys()
             ), f"{requirement} required in {self.deposition_type} deposition"
 
-        # check that the position distribution is valid and has the correct number of arguments
+        # check that the position distribution is valid
         position_distribution = distributions.get_position_distribution(
             self.position_distribution,
             self.position_distribution_parameters,
@@ -67,8 +67,13 @@ class Settings:
             0.0,
         )
 
-        # check that the velocity distribution is valid and has the correct number of arguments
+        # check that the velocity distribution is valid
         velocity_distribution = distributions.get_velocity_distribution(
             self.velocity_distribution,
             self.velocity_distribution_parameters,
         )
+
+        # check that the postprocessing options are valid
+        if self.postprocessing is not None:
+            for name, args in self.postprocessing.items():
+                postprocessing.run_check(name, args, None, None, dry_run=True)

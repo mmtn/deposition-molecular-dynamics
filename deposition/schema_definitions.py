@@ -51,6 +51,7 @@ settings_schema = Schema(
         Optional(SettingsEnum.LOG_FILENAME.value, default="deposition.log"): str,
         Optional(SettingsEnum.MOLECULE_XYZ_FILE.value, default=None): os.path.exists,
         Optional(SettingsEnum.POSITION_DISTRIBUTION_PARAMS.value, default=[]): list,
+        Optional(SettingsEnum.POSTPROCESSING.value, default=None): dict,
         Optional(SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value, default=False): bool,
         Optional(
             SettingsEnum.TO_ORIGIN_BEFORE_EACH_ITERATION.value, default=False

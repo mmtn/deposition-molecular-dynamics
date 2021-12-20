@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import yaml
+from pymatgen.core import IStructure, PeriodicSite
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
@@ -10,14 +11,15 @@ from deposition import drivers, enums, schema_definitions, schema_validation
 
 def get_simulation_cell(simulation_cell):
     """
-    Additional geometry of the simulation cell is calculated using routines from the `pymatgen` module including bounds
-    specification for use with LAMMPS and the cell vectors.
+    Additional geometry of the simulation cell is calculated using routines from the
+    `pymatgen` module including bounds specification for use with LAMMPS and the cell
+    vectors
 
     Arguments:
-        simulation_cell (dict): simulation cell settings (see
-                                :meth:`format <deposition.schema_definitions.simulation_cell_schema>`).
+        simulation_cell (dict): simulation cell settings
+            (see :meth:`format <deposition.schema_definitions.simulation_cell_schema>`)
     Return:
-        simulation_cell (dict): updated simulation cell with added keys for additional geometry
+        simulation_cell (dict): updated simulation cell with additional geometry
     """
     simulation_cell = schema_definitions.simulation_cell_schema.validate(
         simulation_cell
@@ -64,14 +66,14 @@ def get_molecular_dynamics_driver(
     relaxation_time_picoseconds,
 ):
     """
-    Initialises one of the available molecular dynamics drivers. For more information about drivers see
-    :ref:`here <drivers>`.
+    Initialises one of the available molecular dynamics drivers. For more information
+    about drivers see :ref:`here <drivers>`.
 
     Arguments:
-        driver_settings (dict): settings for the specified driver, the `name` key chooses which driver is loaded
-        simulation_cell (dict): specifies the size and shape of the simulation cell
-        deposition_time_picoseconds (int or float): amount of time to run the deposition stage of each iteration
-        relaxation_time_picoseconds (int or float): amount of time to run the relaxation stage of each iteration
+        driver_settings (dict): settings for the specified driver
+        simulation_cell (dict): size and shape of the simulation cell
+        deposition_time_picoseconds (int or float): how long to run the deposition stage
+        relaxation_time_picoseconds (int or float): how long to run the relaxation stage
 
     Returns:
         driver (MolecularDynamicsDriver): driver object
@@ -119,3 +121,30 @@ def read_settings_from_file(settings_filename):
         )
 
     return settings
+
+
+def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff):
+    """
+    Create a neighbour list for the current coordinates to check for isolated atoms
+    or molecules.
+
+    Arguments:
+        simulation_cell (dict): specification of the size and shape of the simulation
+        cell
+        coordinates (np.array): coordinate data
+        bonding_distance_cutoff (float): distance below which to consider atoms
+        bonded (Angstroms)
+
+    Returns:
+        neighbour_list (list): list of integers counting the neighbours of each atom
+    """
+    lattice = Lattice.from_parameters(**simulation_cell)
+    fake_elements = ["X" for _ in range(len(coordinates))]
+    sites = [
+        PeriodicSite(element, coordinate, lattice, coords_are_cartesian=True)
+        for element, coordinate in zip(fake_elements, coordinates)
+    ]
+    structure = IStructure.from_sites(sites)
+    neighbours = structure.get_all_neighbors(bonding_distance_cutoff)
+    neighbour_list = [len(atom_neighbours) for atom_neighbours in neighbours]
+    return neighbour_list

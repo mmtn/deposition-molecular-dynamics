@@ -16,7 +16,7 @@ setup(
     url="https://github.com/mmtn/deposition",
     license=license,
     packages=find_packages(exclude=("tests", "docs")),
-    python_requires='>=3.7',
+    python_requires=">=3.7",
     install_requires=[
         "click>=7.1.2",
         "numpy>=1.20.2",

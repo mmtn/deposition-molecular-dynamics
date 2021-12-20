@@ -20,6 +20,7 @@ class SettingsEnum(Enum):
     NUM_DEPOSITED_PER_ITERATION = "num_deposited_per_iteration"
     POSITION_DISTRIBUTION = "position_distribution"
     POSITION_DISTRIBUTION_PARAMS = "position_distribution_parameters"
+    POSTPROCESSING = "postprocessing"
     RELAXATION_TIME = "relaxation_time_picoseconds"
     SIMULATION_CELL = "simulation_cell"
     STRICT_STRUCTURAL_ANALYSIS = "strict_structural_analysis"
