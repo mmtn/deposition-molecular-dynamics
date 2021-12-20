@@ -9,16 +9,19 @@ from deposition import io, randomisation, structural_analysis
 
 class Iteration:
     """
-    The `Iteration` class represents one cycle of relaxing the system before depositing an atom/molecule as specified
+    The `Iteration` class represents one cycle of relaxing the system before
+    depositing an atom/molecule as specified
     by the input settings.
 
     Each iteration consists of the following steps:
 
     - relaxation: simulation at the specified temperature to equilibrate the system
     - deposition: simulation of the introduction of a new atom/molecule
-    - finalisation: the final simulation state is analysed against various criteria and the data is stored
+    - finalisation: the final simulation state is analysed against various criteria
+    and the data is stored
 
-    This class is also responsible for using the `subprocess` package to run the molecular dynamics software.
+    This class is also responsible for using the `subprocess` package to run the
+    molecular dynamics software.
     """
 
     def __init__(self, driver, settings, iteration_number, pickle_location):
@@ -36,8 +39,10 @@ class Iteration:
 
     def run(self):
         """
-        Runs one iteration of relaxation, deposition, and finalisation. Returns to Deposition the success or failure of
-        this iteration, and the location of the saved data from which to start the next iteration.
+        Runs one iteration of relaxation, deposition, and finalisation. Returns to
+        Deposition the success or failure of
+        this iteration, and the location of the saved data from which to start the
+        next iteration.
 
         Returns:
              success, pickle_location (tuple)
@@ -52,62 +57,40 @@ class Iteration:
 
     def relaxation(self):
         """Runs the relaxation phase of the iteration."""
-        coordinates, elements, velocities = io.read_state(self.pickle_location)
+        state = io.read_state(self.pickle_location)
         if self.settings.to_origin_before_each_iteration:
             wrapped = structural_analysis.wrap_coordinates_in_z(
-                self.driver.simulation_cell, coordinates
+                self.driver.simulation_cell, state.coordinates
             )
             coordinates = structural_analysis.reset_to_origin(wrapped)
-        self.driver.write_inputs(
-            self.relaxation_filename, coordinates, elements, velocities, "relaxation"
-        )
+        self.driver.write_inputs(self.relaxation_filename, state, "relaxation")
         self.call_process(self.relaxation_filename)
-        coordinates, elements, velocities = self.driver.read_outputs(
-            self.relaxation_filename
-        )
-        io.write_state(
-            coordinates,
-            elements,
-            velocities,
-            pickle_location=f"{self.relaxation_filename}.pickle",
-        )
+        state = self.driver.read_outputs(self.relaxation_filename)
+        io.write_state(state, f"{self.relaxation_filename}.pickle")
 
     def deposition(self):
-        """Runs the deposition phase of the iteration including the random addition of new atoms/molecules."""
-        coordinates, elements, velocities = io.read_state(
-            f"{self.relaxation_filename}.pickle"
-        )
+        """Runs the deposition phase of the iteration including the random addition
+        of new atoms/molecules."""
+        state = io.read_state(f"{self.relaxation_filename}.pickle")
         # TODO: create class to contain coordinates, elements, and velocities (state)
-        (
-            coordinates,
-            elements,
-            velocities,
-        ) = randomisation.new_coordinates_and_velocities(
+        state = randomisation.new_coordinates_and_velocities(
             self.settings,
-            coordinates,
-            elements,
-            velocities,
+            state,
             self.driver.simulation_cell,
             self.driver.settings["velocity_scaling_from_metres_per_second"],
         )
-        self.driver.write_inputs(
-            self.deposition_filename, coordinates, elements, velocities, "deposition"
-        )
+        self.driver.write_inputs(self.deposition_filename, state, "deposition")
         self.call_process(self.deposition_filename)
-        coordinates, elements, velocities = self.driver.read_outputs(
-            self.deposition_filename
-        )
+        state = self.driver.read_outputs(self.deposition_filename)
         io.write_state(
-            coordinates,
-            elements,
-            velocities=None,
-            pickle_location=f"{self.deposition_filename}.pickle",
+            state, f"{self.deposition_filename}.pickle", include_velocities=False
         )
 
     def finalisation(self):
-        """Finalises the iteration by running structural analysis and moving the data to the appropriate directory"""
-        coordinates, elements, _ = io.read_state(f"{self.deposition_filename}.pickle")
-        self.check_outcome(coordinates, elements)
+        """Finalises the iteration by running structural analysis and moving the data
+        to the appropriate directory"""
+        state = io.read_state(f"{self.deposition_filename}.pickle")
+        self.check_outcome(state)
         if self.success:
             destination_directory = os.path.join(
                 io.directories["success_dir"], f"{self.iteration_number:03d}/"
@@ -120,7 +103,8 @@ class Iteration:
                 io.directories["failure_dir"], f"{self.iteration_number:03d}/"
             )
         logging.info(
-            f"moving data for iteration {self.iteration_number} to {destination_directory}"
+            f"moving data for iteration {self.iteration_number} to "
+            f"{destination_directory}"
         )
         shutil.copytree(io.directories["working_dir"], destination_directory)
         shutil.rmtree(io.directories["working_dir"])
@@ -144,9 +128,10 @@ class Iteration:
         logging.info(f"running: {command}")
         subprocess.run(command, shell=True, check=True)
 
-    def check_outcome(self, coordinates, elements):
+    def check_outcome(self, state):
         """
-        Runs a structural analysis of the final state of the deposition phase. Currently we check whether:
+        Runs a structural analysis of the final state of the deposition phase.
+        Currently we check whether:
 
         - each atom has at least the required minimum number of neighbours
         - if new atoms have bonded to the periodic copy of the substrate
@@ -158,16 +143,16 @@ class Iteration:
         if self.settings.deposition_type == "monatomic":
             num_deposited_atoms = self.settings.num_deposited_per_iteration
         elif self.settings.deposition_type == "molecule":
-            _, _, molecule_num_atoms = io.read_xyz(self.settings.molecule_xyz_file)
+            molecule = io.read_xyz(self.settings.molecule_xyz_file)
             num_deposited_atoms = (
-                self.settings.num_deposited_per_iteration * molecule_num_atoms
+                len(molecule.elements) * self.settings.num_deposited_per_iteration
             )
 
         logging.info("running structural analyses to check outcome")
         try:
             structural_analysis.check_minimum_neighbours(
                 self.settings.simulation_cell,
-                coordinates,
+                state.coordinates,
                 num_deposited_atoms,
                 self.settings.bonding_distance_cutoff,
             )

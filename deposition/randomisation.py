@@ -5,28 +5,23 @@ import numpy as np
 from deposition import distributions, io, physics, structural_analysis
 
 
-def new_coordinates_and_velocities(
-    settings, coordinates, elements, velocities, simulation_cell, velocity_scaling
-):
+def new_coordinates_and_velocities(settings, state, simulation_cell, velocity_scaling):
     """
-    Randomly generate new atoms based on the deposition settings and add them to the existing structure.
+    Randomly generate new atoms based on the deposition settings and add them to the
+    existing structure.
 
     Arguments:
         settings: settings of the deposition calculation
-        coordinates (np.array): coordinate data
-        elements (list of str): atomic species data
-        velocities (np.array): velocity data
-        simulation_cell (dict): specification of the size and shape of the simulation cell
-        velocity_scaling (float): value to rescale velocities from SI units to the units used by the MD software
+        state
+        simulation_cell (dict): size and shape of the simulation cell
+        velocity_scaling (float): value to rescale velocities from SI units to the
+        units used by the MD software
 
     Returns:
-        coordinates, elements, velocities (tuple)
-            - coordinates (np.array): coordinate data
-            - elements (list of str): atomic species data
-            - velocities (np.array): velocity data
+        state
     """
     surface_height = structural_analysis.get_surface_height(
-        simulation_cell, coordinates
+        simulation_cell, state.coordinates
     )
     new_z_position = surface_height + settings.deposition_height
     polygon_coordinates = get_polygon_on_plane(simulation_cell, new_z_position)
@@ -47,9 +42,9 @@ def new_coordinates_and_velocities(
             deposition_coordinates = [0, 0, 0]
             deposition_elements = [settings.deposition_element]
         elif settings.deposition_type == "molecule":
-            deposition_coordinates, deposition_elements, _ = io.read_xyz(
-                settings.molecule_xyz_file
-            )
+            molecule = io.read_xyz(settings.molecule_xyz_file)
+            deposition_coordinates = molecule.coordinates
+            deposition_elements = molecule.elements
         else:
             raise ValueError(f"unknown deposition type: {settings.deposition_type}")
 
@@ -65,20 +60,24 @@ def new_coordinates_and_velocities(
             settings.min_velocity,
         )
 
-        coordinates = np.vstack((coordinates, new_coordinates))
-        elements = elements + new_elements
-        velocities = np.vstack((velocities, new_velocities * velocity_scaling))
+        state.coordinates = np.vstack((state.coordinates, new_coordinates))
+        state.elements = state.elements + new_elements
+        state.velocities = np.vstack(
+            (state.velocities, new_velocities * velocity_scaling)
+        )
 
-    return coordinates, elements, velocities
+    return state
 
 
 def get_polygon_on_plane(simulation_cell, z_plane):
     """
-    Get the coordinates at the boundaries of the simulation cell at a particular z plane.
+    Get the coordinates at the boundaries of the simulation cell at a particular z
+    plane.
 
     Arguments:
         simulation_cell (dict): the size and shape of the simulation cell
-        z_plane (float): at which height to calculate the polygon coordinates (Angstroms)
+        z_plane (float): at which height to calculate the polygon coordinates (
+        Angstroms)
 
     Returns:
         polygon_coordinates (np.array): coordinates describing the plane
@@ -104,12 +103,14 @@ def get_polygon_on_plane(simulation_cell, z_plane):
 
 def random_velocity(velocity_distribution, minimum_velocity, max_iterations=10000):
     """
-    Randomly generate the velocity of the newly added particles(s) based on the kinetic temperature and mass.
+    Randomly generate the velocity of the newly added particles(s) based on the
+    kinetic temperature and mass.
 
     Arguments:
         velocity_distribution: functional form for obtaining the new velocity
         minimum_velocity (float): minimum bound on the generated velocity (m/s)
-        max_iterations (int): upper bound when trying to get a velocity under `min_velocity`
+        max_iterations (int): upper bound when trying to get a velocity under
+        `min_velocity`
 
     Returns:
         new_velocity (np.array): velocity of the newly added particle(s)
@@ -120,22 +121,25 @@ def random_velocity(velocity_distribution, minimum_velocity, max_iterations=1000
         if vz > minimum_velocity:
             return np.array((vx, vy, -vz))
     raise ValueError(
-        f"failed to generate a velocity greater than the specified minimum of {minimum_velocity} m/s "
-        f"after {max_iterations} iterations"
+        f"failed to generate a velocity greater than the specified minimum of "
+        f"{minimum_velocity} m/s after {max_iterations} iterations"
     )
 
 
 def get_new_positions(position_distribution, molecule_coordinates):
     """
-    Randomly generates a position within the simulation cell on a plane at the specified z-coordinate and centres the
+    Randomly generates a position within the simulation cell on a plane at the
+    specified z-coordinate and centres the
     atom/molecule at this point.
 
     Arguments:
         position_distribution: functional form for obtaining the new position
-        molecule_coordinates (np.array): coordinates of the atoms in the molecule to be added
+        molecule_coordinates (np.array): coordinates of the atoms in the molecule to
+        be added
 
     Returns:
-        new_coordinates (np.array): coordinates of the molecule placed at a randomly generated position in the cell
+        new_coordinates (np.array): coordinates of the molecule placed at a randomly
+        generated position in the cell
     """
     centre = molecule_coordinates - np.mean(molecule_coordinates, axis=0)
     new_coordinates = position_distribution.get_position() + centre
@@ -146,8 +150,8 @@ def get_new_velocities(
     velocity_distribution, coordinates, elements, temperature, minimum_velocity
 ):
     """
-    Randomly generate the velocity of the newly added molecule based on the kinetic temperature and mass. All atoms in
-    the molecule are given identical velocities.
+    Randomly generate the velocity of the newly added molecule based on the kinetic
+    temperature and mass. All atoms in the molecule are given identical velocities.
 
     Arguments:
         velocity_distribution: functional form for obtaining the new velocity

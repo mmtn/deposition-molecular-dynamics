@@ -6,6 +6,7 @@ import yaml
 from deposition import io, utils
 from deposition.iteration import Iteration
 from deposition.settings import Settings
+from deposition.state import State
 
 
 class Deposition:
@@ -32,6 +33,7 @@ class Deposition:
         """
         self.settings = Settings(settings_dict)
         io.start_logging(self.settings.log_filename)
+        self.status = self.read_status()
         self.driver = utils.get_molecular_dynamics_driver(
             self.settings.driver_settings,
             self.settings.simulation_cell,
@@ -39,27 +41,20 @@ class Deposition:
             self.settings.relaxation_time,
         )
 
-        (
-            self.iteration_number,
-            self.sequential_failures,
-            self.total_failures,
-            self.pickle_location,
-        ) = self.read_status()
-
     def initial_setup(self):
         """
         Sets simulation parameters to their initial state and creates the required
         directories. Note that this function only runs when no `status.yaml` file is
         found in the current directory.
         """
-        self.iteration_number = 1
-        self.sequential_failures = 0
-        self.total_failures = 0
-        self.pickle_location = "initial_positions.pickle"
-        coordinates, elements, _ = io.read_xyz(self.settings.substrate_xyz_file)
-        io.write_state(
-            coordinates, elements, velocities=None, pickle_location=self.pickle_location
+        self.status = Status(
+            iteration_number=1,
+            sequential_failures=0,
+            total_failures=0,
+            pickle_location="initial_positions.pickle",
         )
+        state = io.read_xyz(self.settings.substrate_xyz_file)
+        io.write_state(state, self.status.pickle_location, include_velocities=False)
         io.make_directories(tuple(io.directories.values()))
         self.write_status()
 
@@ -69,37 +64,34 @@ class Deposition:
 
         Returns:
             exit_code (int): a code relating to the reason for the termination of the
-            calculation
         """
-        if self.iteration_number is None:
+        if self.status is None:
             self.initial_setup()
         max_iterations = self.settings.max_total_iterations
         max_failures = self.settings.max_sequential_failures
 
-        while (
-            self.iteration_number <= max_iterations
-            and self.sequential_failures <= max_failures
-        ):
+        while True:
             iteration = Iteration(
-                self.driver, self.settings, self.iteration_number, self.pickle_location
+                self.driver,
+                self.settings,
+                self.status.iteration_number,
+                self.status.pickle_location,
             )
-            success, self.pickle_location = iteration.run()
+            success, self.status.pickle_location = iteration.run()
             if success:
-                self.sequential_failures = 0
+                self.status.sequential_failures = 0
             else:
-                self.sequential_failures += 1
-                self.total_failures += 1
-            self.iteration_number += 1
+                self.status.sequential_failures += 1
+                self.status.total_failures += 1
+            self.status.iteration_number += 1
             self.write_status()
 
-        if self.iteration_number > max_iterations:  # exceeded maximum iterations
-            exit_code = 0
-        elif self.sequential_failures > max_failures:  # exceeded maximum failures
-            exit_code = 1
-        else:  # something else went wrong
-            exit_code = 2
+            if self.status.iteration_number > max_iterations:
+                exit_code = 0
+                return 0  # exceeded maximum iterations
 
-        return exit_code
+            elif self.status.sequential_failures > max_failures:
+                return 1  # exceeded maximum failures
 
     @staticmethod
     def read_status():
@@ -111,19 +103,15 @@ class Deposition:
         try:
             with open(Deposition._status_file) as file:
                 status = yaml.safe_load(file)
-            iteration_number = int(status["iteration_number"])
-            sequential_failures = int(status["sequential_failures"])
-            total_failures = int(status["total_failures"])
-            pickle_location = status["pickle_location"]
-            return (
-                iteration_number,
-                sequential_failures,
-                total_failures,
-                pickle_location,
+            return Status(
+                int(status["iteration_number"]),
+                int(status["sequential_failures"]),
+                int(status["total_failures"]),
+                status["pickle_location"],
             )
         except FileNotFoundError:
             logging.info(f"no {Deposition._status_file} file found")
-            return None, None, None, None
+            return None
 
     def write_status(self):
         """
@@ -133,10 +121,26 @@ class Deposition:
         """
         status = {
             "last_updated": dt.now(),
-            "iteration_number": self.iteration_number,
-            "sequential_failures": self.sequential_failures,
-            "total_failures": self.total_failures,
-            "pickle_location": self.pickle_location,
+            "iteration_number": self.status.iteration_number,
+            "sequential_failures": self.status.sequential_failures,
+            "total_failures": self.status.total_failures,
+            "pickle_location": self.status.pickle_location,
         }
         with open(Deposition._status_file, "w") as file:
             yaml.dump(status, file)
+
+
+class Status:
+    """Track the status of the deposition calculation"""
+
+    def __init__(
+        self,
+        iteration_number,
+        sequential_failures,
+        total_failures,
+        pickle_location,
+    ):
+        self.iteration_number = iteration_number
+        self.sequential_failures = sequential_failures
+        self.total_failures = total_failures
+        self.pickle_location = pickle_location
