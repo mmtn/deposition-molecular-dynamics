@@ -24,11 +24,11 @@ class Iteration:
     molecular dynamics software.
     """
 
-    def __init__(self, driver, settings, iteration_number, pickle_location):
+    def __init__(self, driver, settings, status):
         self.driver = driver
         self.settings = settings
-        self.iteration_number = iteration_number
-        self.pickle_location = pickle_location
+        self.iteration_number = status.iteration_number
+        self.pickle_location = status.pickle_location
         self.deposition_filename = os.path.join(
             io.directories["working"], f"deposition{self.iteration_number:03d}"
         )

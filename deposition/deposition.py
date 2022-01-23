@@ -70,12 +70,7 @@ class Deposition:
         max_failures = self.settings.max_sequential_failures
 
         while True:
-            iteration = Iteration(
-                self.driver,
-                self.settings,
-                self.status.iteration_number,
-                self.status.pickle_location,
-            )
+            iteration = Iteration(self.driver, self.settings, self.status)
             success, self.status.pickle_location = iteration.run()
             if success:
                 self.status.sequential_failures = 0
@@ -86,10 +81,8 @@ class Deposition:
             self.write_status()
 
             if self.status.iteration_number > max_iterations:
-                exit_code = 0
                 return 0  # exceeded maximum iterations
-
-            elif self.status.sequential_failures > max_failures:
+            if self.status.sequential_failures > max_failures:
                 return 1  # exceeded maximum failures
 
     @staticmethod

@@ -1,7 +1,7 @@
 import logging
 import re
 
-from schema import SchemaError, Optional
+from schema import Optional, SchemaError
 
 from deposition import distributions
 

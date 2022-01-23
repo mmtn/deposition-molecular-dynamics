@@ -2,46 +2,39 @@ import os
 
 from schema import And, Optional, Or, Schema, Use
 
-from deposition import schema_validation
 from deposition.enums import SettingsEnum, SimulationCellEnum
+from deposition.schema_validation import (
+    allowed_deposition_types,
+    allowed_position_distributions,
+    allowed_velocity_distributions,
+    strictly_positive,
+)
 
 settings_schema = Schema(
     {
         SettingsEnum.DEPOSITION_HEIGHT.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
+            Or(int, float), Use(strictly_positive)
         ),
         SettingsEnum.DEPOSITION_TEMPERATURE.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
+            Or(int, float), Use(strictly_positive)
         ),
-        SettingsEnum.DEPOSITION_TIME.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SettingsEnum.DEPOSITION_TYPE.value: And(
-            str, Use(schema_validation.allowed_deposition_types)
-        ),
-        SettingsEnum.MAX_SEQUENTIAL_FAILURES.value: And(
-            int, Use(schema_validation.strictly_positive)
-        ),
-        SettingsEnum.MAX_TOTAL_ITERATIONS.value: And(
-            int, Use(schema_validation.strictly_positive)
-        ),
-        SettingsEnum.MIN_VELOCITY.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
+        SettingsEnum.DEPOSITION_TIME.value: And(Or(int, float), Use(strictly_positive)),
+        SettingsEnum.DEPOSITION_TYPE.value: And(str, Use(allowed_deposition_types)),
+        SettingsEnum.MAX_SEQUENTIAL_FAILURES.value: And(int, Use(strictly_positive)),
+        SettingsEnum.MAX_TOTAL_ITERATIONS.value: And(int, Use(strictly_positive)),
+        SettingsEnum.MIN_VELOCITY.value: And(Or(int, float), Use(strictly_positive)),
         SettingsEnum.NUM_DEPOSITED_PER_ITERATION.value: And(
-            int, Use(schema_validation.strictly_positive)
+            int, Use(strictly_positive)
         ),
         SettingsEnum.POSITION_DISTRIBUTION.value: And(
-            str, Use(schema_validation.allowed_position_distributions)
+            str, Use(allowed_position_distributions)
         ),
-        SettingsEnum.RELAXATION_TIME.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
+        SettingsEnum.RELAXATION_TIME.value: And(Or(int, float), Use(strictly_positive)),
         SettingsEnum.DRIVER_SETTINGS.value: dict,
         SettingsEnum.SIMULATION_CELL.value: dict,
         SettingsEnum.SUBSTRATE_XYZ_FILE.value: os.path.exists,
         SettingsEnum.VELOCITY_DISTRIBUTION.value: And(
-            str, Use(schema_validation.allowed_velocity_distributions)
+            str, Use(allowed_velocity_distributions)
         ),
         Optional(SettingsEnum.COMMAND_PREFIX.value, default=""): str,
         Optional(SettingsEnum.DEPOSITION_ELEMENT.value, default=None): str,
@@ -56,29 +49,18 @@ settings_schema = Schema(
 
 simulation_cell_schema = Schema(
     {
-        SimulationCellEnum.A.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SimulationCellEnum.B.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SimulationCellEnum.C.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SimulationCellEnum.ALPHA.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SimulationCellEnum.BETA.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
-        SimulationCellEnum.GAMMA.value: And(
-            Or(int, float), Use(schema_validation.strictly_positive)
-        ),
+        SimulationCellEnum.A.value: And(Or(int, float), Use(strictly_positive)),
+        SimulationCellEnum.B.value: And(Or(int, float), Use(strictly_positive)),
+        SimulationCellEnum.C.value: And(Or(int, float), Use(strictly_positive)),
+        SimulationCellEnum.ALPHA.value: And(Or(int, float), Use(strictly_positive)),
+        SimulationCellEnum.BETA.value: And(Or(int, float), Use(strictly_positive)),
+        SimulationCellEnum.GAMMA.value: And(Or(int, float), Use(strictly_positive)),
     }
 )
 
 
 def get_settings_schema():
+    # TODO: update this documentation for new postprocessing settings, etc
     """
     A list of the required and optional settings for the simulation. These settings control the type and nature of the
     deposition to be simulated.
@@ -150,7 +132,8 @@ def get_settings_schema():
 
 def get_simulation_cell_schema():
     """
-    Input schema for the parameters which define the periodic cell. Lengths are in Angstroms and angles are in degrees.
+    Input schema for the parameters which define the periodic cell. Lengths are in
+    Angstroms and angles are in degrees.
 
     Example::
 

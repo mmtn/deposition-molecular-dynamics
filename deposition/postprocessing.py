@@ -1,6 +1,5 @@
 import numpy as np
 
-import deposition.utils
 from deposition.state import State
 from deposition.structural_analysis import wrap_coordinates_in_z
 from deposition.utils import generate_neighbour_list, get_simulation_cell
@@ -37,9 +36,9 @@ class NumNeighboursCheck:
     num_arguments = 2
 
     def __init__(self, arguments, state, simulation_cell):
-        assert len(arguments) == self.num_arguments, (
-            f"{self.__class__} requires {self.num_arguments} argument(s)"
-        )
+        assert (
+            len(arguments) == self.num_arguments
+        ), f"{self.__class__} requires {self.num_arguments} argument(s)"
         self.min_neighbours = float(arguments[0])
         self.bonding_cutoff = float(arguments[1])
         self.state = state
