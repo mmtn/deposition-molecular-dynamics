@@ -1,0 +1,40 @@
+# 1. Deposition settings (physics)
+deposition_type: monatomic
+deposition_element: O
+substrate_xyz_file: test_data/valid_xyz.xyz
+deposition_height_Angstroms: 10
+deposition_temperature_Kelvin: 300
+deposition_time_picoseconds: 0.4
+relaxation_time_picoseconds: 0.1
+max_total_iterations: 10
+max_sequential_failures: 5
+min_velocity_metres_per_second: 25
+num_deposited_per_iteration: 1
+position_distribution: uniform
+velocity_distribution_parameters: [300, 1e-25, 0]
+velocity_distribution: gaussian
+
+# 2. Driver settings
+driver_settings:
+    name: LAMMPS
+    path_to_binary: test_data/fake_binary
+    path_to_input_template: test_data/lammps_input_template.txt
+    velocity_scaling_from_metres_per_second: 0.00001
+    timestep_scaling_from_picoseconds: 1000
+    elements_in_potential: Al O
+    atomic_masses:
+        - 26.9815386
+        - 15.9994
+    potential_file: test_data/potential.reaxff
+    temperature_of_system: 300
+    molecular_dynamics_timestep: 1.0
+    write_data_every_n_steps: 10
+
+# 3. Simulation cell
+simulation_cell:
+    a: 8.08
+    b: 8.08
+    c: 200
+    alpha: 90
+    beta: 90
+    gamma: 90
