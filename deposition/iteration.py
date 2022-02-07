@@ -123,6 +123,9 @@ class Iteration:
         Runs postprocessing routines on the final state of the deposition phase.
         """
 
+        if self.settings.postprocessing is None:
+            return
+
         logging.info("running post processing")
 
         try:
