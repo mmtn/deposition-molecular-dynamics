@@ -1,9 +1,9 @@
 import os
 
 import numpy as np
-
 from deposition import io, physics
-from deposition.drivers.molecular_dynamics_driver import MolecularDynamicsDriver
+from deposition.drivers import MolecularDynamicsDriver
+from deposition.state import State
 
 
 class GULPDriver(MolecularDynamicsDriver):
@@ -14,9 +14,6 @@ class GULPDriver(MolecularDynamicsDriver):
     _command line, write GULP input files, and read GULP output files. The `schema_dict` defines additional
     inputs which are required when using the GULP driver.
     """
-
-    name = "GULP"
-    """String matched against input settings when initialising the driver."""
 
     schema_dict = {
         "GULP_LIB": os.path.exists,
@@ -65,17 +62,13 @@ class GULPDriver(MolecularDynamicsDriver):
         """
         os.putenv("GULP_LIB", self.settings["GULP_LIB"])
 
-    def write_inputs(
-        self, filename, coordinates, elements, velocities, iteration_stage
-    ):
+    def write_inputs(self, filename, state, iteration_stage):
         """
         Write GULP input file for the next part of the deposition calculation.
 
         Arguments:
             filename (str): name to use for input files
-            coordinates (np.array): coordinate data
-            elements (list): atomic species data
-            velocities (np.array): velocity data
+            state: coordinates, elements, velocities
             iteration_stage (str): either "relaxation" or "deposition"
         """
 
@@ -133,7 +126,7 @@ class GULPDriver(MolecularDynamicsDriver):
         input_filename = f"{filename}.input"
 
         thermostat_damping = self.get_thermostat_damping(
-            len(elements), self.settings["temperature_of_system"]
+            len(state.elements), self.settings["temperature_of_system"]
         )
         x_size, y_size, z_size, alpha, beta, gamma = parameters_from_simulation_cell(
             self.simulation_cell
@@ -170,9 +163,9 @@ class GULPDriver(MolecularDynamicsDriver):
         io.write_file_using_template(
             input_filename, self.settings["path_to_input_template"], template_values
         )
-        write_positions(input_filename, coordinates, elements)
+        write_positions(input_filename, state.coordinates, state.elements)
         if iteration_stage == "deposition":
-            write_velocities(input_filename, velocities)
+            write_velocities(input_filename, state.velocities)
 
     @staticmethod
     def get_thermostat_damping(num_atoms, temperature=300.0):
@@ -206,10 +199,7 @@ class GULPDriver(MolecularDynamicsDriver):
             filename (str): basename to use for reading output files
 
         Returns:
-            coordinates, elements, velocities (tuple)
-                - coordinates (np.array): coordinate data
-                - elements (list): atomic species data
-                - velocities (np.array): velocity data
+            state: coordinates, elements, velocities
         """
 
         def get_data_types(trajectory_file):
@@ -285,4 +275,4 @@ class GULPDriver(MolecularDynamicsDriver):
 
         coordinates, elements, _ = io.read_xyz(f"{filename}.xyz")
         velocities = get_data_from_trajectory_file(f"{filename}.trg", "Velocities")
-        return coordinates, elements, velocities
+        return State(coordinates, elements, velocities)

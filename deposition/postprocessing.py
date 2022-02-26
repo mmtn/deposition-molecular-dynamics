@@ -1,26 +1,29 @@
+from enum import Enum
+
 import numpy as np
-
 from deposition.state import State
-from deposition.structural_analysis import wrap_coordinates_in_z
-from deposition.utils import generate_neighbour_list, get_simulation_cell
+from deposition.utils import (
+    generate_neighbour_list,
+    get_simulation_cell,
+    wrap_coordinates_in_z,
+)
 
 
-def run(name, arguments, state, simulation_cell, dry_run=False):
+def run(name, state, simulation_cell, parameters=None, dry_run=False):
     """
     Runs the postprocessing check on the provided structural data.
 
     Args:
         name: the string referring to the check
-        arguments: any arguments required for the check
         state: coordinates, elements, velocities
         simulation_cell: size and shape of the simulation cell
+        parameters: any arguments required for the check
         dry_run: optionally skip the actual check (for validation at initialisation)
     """
-    if name == "num_neighbours":
-        routine = NumNeighboursCheck(arguments, state, simulation_cell)
-    elif name == "shift_to_origin":
-        routine = ShiftToOrigin(arguments, state, simulation_cell)
-    else:
+    try:
+        postprocessing_class = PostProcessingEnum[name].value
+        routine = postprocessing_class(state, simulation_cell, parameters)
+    except KeyError:
         raise ValueError(f"unknown post processing routine {name}")
 
     if not dry_run:
@@ -33,14 +36,17 @@ class NumNeighboursCheck:
     bonded together and there are no isolated regions.
     """
 
-    num_arguments = 2
+    num_parameters = 2
+    default_parameters = (1, 4.0)
 
-    def __init__(self, arguments, state, simulation_cell):
+    def __init__(self, state, simulation_cell, parameters):
+        if parameters is None:
+            parameters = self.default_parameters
         assert (
-            len(arguments) == self.num_arguments
-        ), f"{self.__class__} requires {self.num_arguments} argument(s)"
-        self.min_neighbours = float(arguments[0])
-        self.bonding_cutoff = float(arguments[1])
+            len(parameters) == self.num_parameters
+        ), f"{self.__class__} requires {self.num_parameters} argument(s)"
+        self.min_neighbours = float(parameters[0])
+        self.bonding_cutoff = float(parameters[1])
         self.state = state
         self.simulation_cell = simulation_cell
 
@@ -56,19 +62,29 @@ class NumNeighboursCheck:
 class ShiftToOrigin:
     """
     Assess the number of neighbours of all simulated atoms to check that
-    everything is
-    bonded together and there are no isolated regions.
+    everything is bonded together and there are no isolated regions.
     """
 
-    def __init__(self, arguments, state, simulation_cell):
-        assert arguments == True, "to turn on this routine, use shift_to_origin: True"
+    default_parameters = True
+
+    def __init__(self, state, simulation_cell, parameters):
+        if parameters is None:
+            parameters = self.default_parameters
+        assert parameters == True, "to turn on this routine, use shift_to_origin: True"
         self.state = state
         self.simulation_cell = simulation_cell
 
     def run(self):
-        """Moves the given coordinates back to the origin at (0, 0, 0)"""
+        """Moves the given state back to the origin at (0, 0, 0)"""
         full_simulation_cell = get_simulation_cell(self.simulation_cell)
         wrapped = wrap_coordinates_in_z(full_simulation_cell, self.state.coordinates)
         minima = np.min(wrapped, axis=0)
         shifted_coordinates = np.subtract(wrapped, minima)
         return State(shifted_coordinates, self.state.elements, self.state.velocities)
+
+
+class PostProcessingEnum(Enum):
+    """Map strings to postprocessing routines"""
+
+    num_neighbours = NumNeighboursCheck
+    shift_to_origin = ShiftToOrigin

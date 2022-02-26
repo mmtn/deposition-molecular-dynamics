@@ -2,15 +2,12 @@ import collections
 import itertools
 import logging
 import os
-import pickle
 import sys
 from string import Template
 
 import numpy as np
-
+from deposition.enums import DirectoriesEnum
 from deposition.state import State
-
-directories = dict(working="current", success="iterations", failure="failed")
 
 
 def start_logging(log_filename):
@@ -53,8 +50,7 @@ def make_directories(directory_names):
                 f"directory '{name}' already exists, check for existing data"
             )
             raise FileExistsError(
-                f"remove the following directories to proceed: "
-                f"{list(directories.values())}"
+                f"remove the following directories to proceed: {[directory.value for directory in DirectoriesEnum]}"
             )
 
 
@@ -84,13 +80,14 @@ def read_xyz(xyz_file, step=None):
         equal to 1
 
     Returns:
-        state: coordinates, elements, velocities
+        state: state, elements, velocities
     """
     # Get the number of lines in the file and the number of atoms
-    header_lines_per_step = 2
     num_lines = sum(1 for _ in open(xyz_file))
     with open(xyz_file) as file:
         num_atoms = int(file.readline())
+
+    header_lines_per_step = 2
     lines_per_step = num_atoms + header_lines_per_step
     total_steps = int(num_lines / lines_per_step)
 
@@ -120,32 +117,12 @@ def write_file_using_template(output_filename, template_filename, template_value
     template and write a new file.
 
     Arguments:
-        output_filename (path): path to new file written with the template fields
-        replaced
+        output_filename (path): path to new file written with the template fields replaced
         template_filename (path): path to template with replaceable fields
         template_values (dict): key/value pairs used for find and replace in the
-        template
     """
     with open(template_filename) as file:
         template = Template(file.read())
         result = template.substitute(template_values)
     with open(output_filename, "w") as file:
         file.write(result)
-
-
-def read_state(pickle_location):
-    """
-    Reads current state of calculation from pickle file. The pickle file stores the
-    coordinates, species (elements),
-    and velocities of all simulated atoms.
-
-    Arguments:
-        pickle_location (path): path read the pickled data from
-
-    Returns:
-        state: coordinates, elements, velocities
-    """
-    logging.info(f"reading state from {pickle_location}")
-    with open(pickle_location, "rb") as file:
-        data = pickle.load(file)
-    return State(data["coordinates"], data["elements"], data["velocities"])

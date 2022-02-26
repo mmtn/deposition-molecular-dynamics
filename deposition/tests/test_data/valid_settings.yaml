@@ -1,5 +1,5 @@
 # 1. Deposition settings (physics)
-deposition_type: monatomic
+deposition_type: MONATOMIC
 deposition_element: O
 substrate_xyz_file: test_data/valid_xyz.xyz
 deposition_height_Angstroms: 10
@@ -13,6 +13,8 @@ num_deposited_per_iteration: 1
 position_distribution: uniform
 velocity_distribution_parameters: [300, 1e-25, 0]
 velocity_distribution: gaussian
+postprocessing:
+    bad: test
 
 # 2. Driver settings
 driver_settings:

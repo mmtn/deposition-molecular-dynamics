@@ -1,14 +1,12 @@
+import deposition.input_schema
 import pytest
 import schema
 import yaml
-
 
 """
 Note: validation of data types is performed by the schema package, subject to 
 deposition/schema_definitions.py.
 """
-
-from deposition import schema_definitions
 
 
 with open("test_data/valid_settings.yaml") as file:
@@ -17,7 +15,7 @@ with open("test_data/valid_settings.yaml") as file:
 
 def validate_settings(settings=None):
     settings = settings or VALID_SETTINGS
-    schema_definitions.get_settings_schema().validate(settings)
+    deposition.input_schema.get_settings_schema().validate(settings)
 
 
 @pytest.fixture

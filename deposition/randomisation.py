@@ -1,8 +1,8 @@
 import logging
 
 import numpy as np
-
-from deposition import distributions, io, physics, structural_analysis
+from deposition import distributions, io, physics
+from deposition.input_schema import DepositionTypeEnum
 
 
 def new_coordinates_and_velocities(settings, state, simulation_cell, velocity_scaling):
@@ -12,36 +12,44 @@ def new_coordinates_and_velocities(settings, state, simulation_cell, velocity_sc
 
     Arguments:
         settings: settings of the deposition calculation
-        state
+        state: coordinates, elements, velocities
         simulation_cell (dict): size and shape of the simulation cell
-        velocity_scaling (float): value to rescale velocities from SI units to the
-        units used by the MD software
+        velocity_scaling (float): value to rescale velocities from SI units to the units used by the MD software
 
     Returns:
-        state
+        state: coordinates, elements, velocities
     """
-    surface_height = structural_analysis.get_surface_height(
-        simulation_cell, state.coordinates
-    )
+
+    def get_surface_height(simulation_cell, coordinates, percentage_of_box=80):
+        """
+        Crude method to find the surface of the existing structure by finding the maximum
+        z_plane-coordinate in the lower 80% of the simulation cell (by default).
+        """
+        box_height = simulation_cell["z_max"] - simulation_cell["z_min"]
+        cutoff = box_height * (percentage_of_box / 100)
+        z = [xyz[2] for xyz in coordinates if xyz[2] < cutoff]
+        return max(z)
+
+    surface_height = get_surface_height(simulation_cell, state.coordinates)
     new_z_position = surface_height + settings.deposition_height
     polygon_coordinates = get_polygon_on_plane(simulation_cell, new_z_position)
+    position_distribution = distributions.get_position_distribution(
+        settings.position_distribution,
+        polygon_coordinates,
+        new_z_position,
+        settings.position_distribution_parameters,
+    )
     velocity_distribution = distributions.get_velocity_distribution(
         settings.velocity_distribution,
         settings.velocity_distribution_parameters,
     )
-    position_distribution = distributions.get_position_distribution(
-        settings.position_distribution,
-        settings.position_distribution_parameters,
-        polygon_coordinates,
-        new_z_position,
-    )
 
     logging.info(f"generating coordinates and velocities for deposited atom(s)")
     for ii in range(settings.num_deposited_per_iteration):
-        if settings.deposition_type == "monatomic":
+        if settings.deposition_type == DepositionTypeEnum.MONATOMIC.name:
             deposition_coordinates = [0, 0, 0]
             deposition_elements = [settings.deposition_element]
-        elif settings.deposition_type == "molecule":
+        elif settings.deposition_type == DepositionTypeEnum.MOLECULE.name:
             molecule = io.read_xyz(settings.molecule_xyz_file)
             deposition_coordinates = molecule.coordinates
             deposition_elements = molecule.elements
@@ -71,16 +79,16 @@ def new_coordinates_and_velocities(settings, state, simulation_cell, velocity_sc
 
 def get_polygon_on_plane(simulation_cell, z_plane):
     """
-    Get the coordinates at the boundaries of the simulation cell at a particular z
+    Get the state at the boundaries of the simulation cell at a particular z_plane
     plane.
 
     Arguments:
         simulation_cell (dict): the size and shape of the simulation cell
-        z_plane (float): at which height to calculate the polygon coordinates (
+        z_plane (float): at which height to calculate the polygon state (
         Angstroms)
 
     Returns:
-        polygon_coordinates (np.array): coordinates describing the plane
+        polygon_coordinates (np.array): state describing the plane
     """
     # Note: order matters in this list. These points draw a matplotlib path.
     base_polygon_coordinates = [
@@ -129,16 +137,16 @@ def random_velocity(velocity_distribution, minimum_velocity, max_iterations=1000
 def get_new_positions(position_distribution, molecule_coordinates):
     """
     Randomly generates a position within the simulation cell on a plane at the
-    specified z-coordinate and centres the
+    specified z_plane-coordinate and centres the
     atom/molecule at this point.
 
     Arguments:
         position_distribution: functional form for obtaining the new position
-        molecule_coordinates (np.array): coordinates of the atoms in the molecule to
+        molecule_coordinates (np.array): state of the atoms in the molecule to
         be added
 
     Returns:
-        new_coordinates (np.array): coordinates of the molecule placed at a randomly
+        new_coordinates (np.array): state of the molecule placed at a randomly
         generated position in the cell
     """
     centre = molecule_coordinates - np.mean(molecule_coordinates, axis=0)

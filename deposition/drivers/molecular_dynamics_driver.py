@@ -1,8 +1,7 @@
 import os
 
+from deposition.input_schema import reserved_keyword, strictly_positive
 from schema import And, Optional, Or, Schema, Use
-
-from deposition.schema_validation import reserved_keyword, strictly_positive
 
 
 class MolecularDynamicsDriver:

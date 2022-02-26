@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class DirectoriesEnum(Enum):
+    """Map strings to directory paths"""
+
+    FAILED = "failed"
+    SUCCESS = "iterations"
+    WORKING = "current"
+
+
 class SettingsEnum(Enum):
     """Map strings to settings variables"""
 
@@ -22,7 +30,7 @@ class SettingsEnum(Enum):
     POSTPROCESSING = "postprocessing"
     RELAXATION_TIME = "relaxation_time_picoseconds"
     SIMULATION_CELL = "simulation_cell"
-    STRICT_STRUCTURAL_ANALYSIS = "strict_structural_analysis"
+    STRICT_POSTPROCESSING = "strict_postprocessing"
     SUBSTRATE_XYZ_FILE = "substrate_xyz_file"
     VELOCITY_DISTRIBUTION = "velocity_distribution"
     VELOCITY_DISTRIBUTION_PARAMS = "velocity_distribution_parameters"
@@ -37,3 +45,21 @@ class SimulationCellEnum(Enum):
     ALPHA = "alpha"
     BETA = "beta"
     GAMMA = "gamma"
+
+
+class StateEnum(Enum):
+    """Map strings to simulation state information"""
+
+    COORDINATES = "state"
+    ELEMENTS = "elements"
+    VELOCITIES = "velocities"
+
+
+class StatusEnum(Enum):
+    """Map strings to status information"""
+
+    ITERATION_NUMBER = "iteration_number"
+    LAST_UPDATED = "last_updated"
+    PICKLE_LOCATION = "pickle_location"
+    SEQUENTIAL_FAILURES = "sequential_failures"
+    TOTAL_FAILURES = "total_failures"
