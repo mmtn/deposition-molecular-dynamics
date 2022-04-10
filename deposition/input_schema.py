@@ -149,6 +149,7 @@ settings_schema = Schema(
         Optional(SettingsEnum.VELOCITY_DISTRIBUTION_PARAMS.value, default=[]): list,
     }
 )
+
 simulation_cell_schema = Schema(
     {
         SimulationCellEnum.A.value: And(Or(int, float), Use(strictly_positive)),

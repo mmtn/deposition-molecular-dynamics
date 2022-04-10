@@ -13,7 +13,7 @@ def get_position_distribution(name, polygon_coordinates, z_plane, arguments=None
     Arguments:
         name (str): string used to choose a particular distribution
         arguments (list): arguments to pass to constructor
-        polygon_coordinates (np.array): xy-state of the polygon within which to generate a position
+        polygon_coordinates (np.array): xy-coordinates of the polygon within which to generate a position
         z_plane (float): z-coordinate of the position
 
     Returns:

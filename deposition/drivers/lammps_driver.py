@@ -115,7 +115,7 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             element_integers, index=atom_indices, columns=["type"]
         )
         coordinates_dataframe = pd.DataFrame(
-            state.coordinates, index=atom_indices, columns=["x", "y", "z_plane"]
+            state.coordinates, index=atom_indices, columns=["x", "y", "z"]
         )
         combined_atomic_dataframe = pd.concat(
             (elements_dataframe, charges_dataframe, coordinates_dataframe), axis=1
@@ -148,7 +148,7 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             state: state, elements, velocities
         """
         data = LammpsData.from_file(f"{filename}.output_data", atom_style="charge")
-        coordinates = data.atoms[["x", "y", "z_plane"]].to_numpy()
+        coordinates = data.atoms[["x", "y", "z"]].to_numpy()
         elements = data.atoms["type"].to_list()
         velocities = data.velocities.to_numpy()
         return State(coordinates, elements, velocities)

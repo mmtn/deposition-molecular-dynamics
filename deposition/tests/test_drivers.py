@@ -6,7 +6,7 @@ from deposition.drivers import driver_enums
 
 @pytest.mark.parametrize("driver", driver_enums.DriverEnum)
 @pytest.mark.parametrize("method", ["write_inputs", "read_outputs"])
-def test_drivers_provide_method(driver, method):
+def test_driver_provides_method(driver, method):
     assert method in driver.value.__dict__.keys()
 
 

@@ -14,7 +14,7 @@ position_distribution: uniform
 velocity_distribution_parameters: [300, 1e-25, 0]
 velocity_distribution: gaussian
 postprocessing:
-    bad: test
+    shift_to_origin: True
 
 # 2. Driver settings
 driver_settings:
