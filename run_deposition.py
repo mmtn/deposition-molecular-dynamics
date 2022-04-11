@@ -3,11 +3,12 @@ import sys
 import click
 
 import deposition
+from deposition.settings import Settings
 
 
 @click.command()
 @click.option(
-    "--settings", "settings_filename", required=True, type=click.Path(exists=True)
+    "--settings", "filename", required=True, type=click.Path(exists=True)
 )
 def main(settings_filename):
     """
@@ -21,7 +22,7 @@ def main(settings_filename):
     Returns:
         exit_code (int): a code relating to the reason for the termination of the calculation
     """
-    settings = deposition.utils.read_settings_from_file(settings_filename)
+    settings = Settings.from_file(settings_filename).as_dict()
     calculation = deposition.Deposition(settings)
     return calculation.run()
 

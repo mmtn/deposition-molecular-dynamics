@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-from pymatgen.io.lammps.data import LammpsData
-from schema import And, Optional, Or, Use
-
-from deposition import io, schema_validation
+from deposition import input_schema, io
 from deposition.drivers.molecular_dynamics_driver import MolecularDynamicsDriver
 from deposition.state import State
+from pymatgen.io.lammps.data import LammpsData
+from schema import And, Optional, Or, Use
 
 
 class LAMMPSDriver(MolecularDynamicsDriver):
@@ -17,16 +16,13 @@ class LAMMPSDriver(MolecularDynamicsDriver):
     inputs which are required when using the LAMMPS driver.
     """
 
-    name = "LAMMPS"
-    """String matched against input settings when initialising the driver."""
-
     schema_dict = {
         "atomic_masses": list,  # list of int/floats
         "elements_in_potential": str,  # list of strings
         "timestep_scaling_from_picoseconds": And(
-            Or(int, float), Use(schema_validation.strictly_positive)
+            Or(int, float), Use(input_schema.strictly_positive)
         ),
-        Optional("num_steps"): Use(schema_validation.reserved_keyword),
+        Optional("num_steps"): Use(input_schema.reserved_keyword),
     }
     """
     The names and types of additional inputs for LAMMPS:
@@ -149,7 +145,7 @@ class LAMMPSDriver(MolecularDynamicsDriver):
             filename (str): basename to use for reading output files
 
         Returns:
-            state: coordinates, elements, velocities
+            state: state, elements, velocities
         """
         data = LammpsData.from_file(f"{filename}.output_data", atom_style="charge")
         coordinates = data.atoms[["x", "y", "z"]].to_numpy()

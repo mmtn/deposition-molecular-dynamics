@@ -4,8 +4,6 @@ import math
 import numpy as np
 from pymatgen.core import Element
 
-from deposition import maths
-
 CONSTANTS = {
     "BoltzmannConstant": 1.380658e-23,  # Joules per Kelvin
     "AtomicMassUnit_kg": 1.66053906660e-27,  # kg
@@ -41,6 +39,20 @@ def get_canonical_variance(num_atoms, temperature=300.0):
     return canonical_variance
 
 
+def normal_distribution(mean, sigma):
+    """
+    Uses the `numpy.random.normal` function to generate random values from a normal distribution.
+
+    Arguments:
+        mean (float): the centre of the normal distribution
+        sigma (float): the standard deviation of the normal distribution
+
+    Returns:
+        randomly distributed value (float)
+    """
+    return np.random.normal(loc=mean, scale=sigma)
+
+
 def velocity_from_normal_distribution(gas_temperature, particle_mass, mean=0.0):
     """
     Return a velocity in metres per second randomly selected from a normal distribution.
@@ -57,7 +69,7 @@ def velocity_from_normal_distribution(gas_temperature, particle_mass, mean=0.0):
         sigma = math.sqrt(
             (CONSTANTS["BoltzmannConstant"] * gas_temperature) / particle_mass
         )
-        return maths.normal_distribution(mean, sigma)
+        return normal_distribution(mean, sigma)
     else:
         logging.warning(
             "Particle mass in velocity calculation is zero, returning zero velocity. Note: this could be "
@@ -71,7 +83,7 @@ def get_centre_of_mass(coordinates, elements):
     Calculates the centre of mass
 
     Arguments:
-        coordinates (array): coordinates of the atoms
+        coordinates (array): state of the atoms
         elements (list): list of str with element names
 
     Returns:
@@ -95,11 +107,11 @@ def get_moment_of_inertia(coordinates, elements):
     Calculates the moment of inertia
 
     Arguments:
-        coordinates (array): coordinates of the atoms
+        coordinates (array): state of the atoms
         elements (list): list of str with element names
 
     Returns:
-        moment_of_inertia (array): moment of inertia around the x, y, and z axes
+        moment_of_inertia (array): moment of inertia around the x, y, and z_plane axes
 
     """
     centre_of_mass, masses = get_centre_of_mass(coordinates, elements)

@@ -1,12 +1,13 @@
 import logging
 
 import numpy as np
-import yaml
 from pymatgen.core import IStructure, PeriodicSite
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
-from deposition import drivers, enums, schema_definitions, schema_validation
+from deposition import input_schema
+from deposition.drivers.driver_enums import DriverEnum
+from deposition.enums import SettingsEnum
 
 
 def get_simulation_cell(simulation_cell):
@@ -21,9 +22,7 @@ def get_simulation_cell(simulation_cell):
     Return:
         simulation_cell (dict): updated simulation cell with additional geometry
     """
-    simulation_cell = schema_definitions.simulation_cell_schema.validate(
-        simulation_cell
-    )
+    simulation_cell = input_schema.simulation_cell_schema.validate(simulation_cell)
     lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
 
     if lammps_box.tilt is None:
@@ -78,54 +77,38 @@ def get_molecular_dynamics_driver(
     Returns:
         driver (MolecularDynamicsDriver): driver object
     """
-    chosen_driver = driver_settings["name"]
+    driver_name = driver_settings["name"]
+
+    try:
+        driver_class = DriverEnum[driver_name].value
+    except KeyError:
+        raise ValueError(f"no driver with the name '{driver_name}' was found")
+
+    # for driver in DriverEnum:
+    #     if driver_name == driver.name:
+    #         driver_class = driver.value
+    #         break
+    # else:
+    #     raise ValueError(f"no driver with the name '{chosen_driver}' was found")
+
     simulation_cell_full = get_simulation_cell(simulation_cell)
-
-    if chosen_driver == "LAMMPS":
-        driver_class = drivers.lammps_driver.LAMMPSDriver
-    elif chosen_driver == "GULP":
-        driver_class = drivers.gulp_driver.GULPDriver
-    else:
-        raise ValueError(f"no driver with the name '{chosen_driver}' was found")
-
     driver = driver_class(driver_settings, simulation_cell_full)
 
-    schema_validation.check_input_file_syntax(driver)
-    driver.settings.update({"deposition_time_picoseconds": deposition_time_picoseconds})
-    driver.settings.update({"relaxation_time_picoseconds": relaxation_time_picoseconds})
-    logging.info(f"Using driver for {chosen_driver}")
+    input_schema.check_input_file_syntax(driver)
+    driver.settings.update(
+        {SettingsEnum.DEPOSITION_TIME.value: deposition_time_picoseconds}
+    )
+    driver.settings.update(
+        {SettingsEnum.RELAXATION_TIME.value: relaxation_time_picoseconds}
+    )
+    logging.info(f"Using driver for {driver_name}")
 
     return driver
 
 
-def read_settings_from_file(settings_filename):
-    """
-    Read and validate a YAML file containing simulation settings.
-
-    Arguments:
-        settings_filename (path): path to a YAML file containing settings for the simulation
-
-    Returns:
-        settings (dict): validated settings for the deposition simulation
-    """
-    with open(settings_filename) as file:
-        settings = yaml.safe_load(file)
-    settings = schema_definitions.get_settings_schema().validate(settings)
-
-    for requirement in schema_validation.DEPOSITION_TYPES[
-        settings[enums.SettingsEnum.DEPOSITION_TYPE.value]
-    ]:
-        assert requirement in settings.keys(), (
-            f"{requirement} required in "
-            f"{settings[enums.SettingsEnum.DEPOSITION_TYPE.value]} deposition "
-        )
-
-    return settings
-
-
 def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff):
     """
-    Create a neighbour list for the current coordinates to check for isolated atoms
+    Create a neighbour list for the current state to check for isolated atoms
     or molecules.
 
     Arguments:
@@ -148,3 +131,26 @@ def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutof
     neighbours = structure.get_all_neighbors(bonding_distance_cutoff)
     neighbour_list = [len(atom_neighbours) for atom_neighbours in neighbours]
     return neighbour_list
+
+
+def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box=80):
+    """
+    Take cartesian state and wrap those at the top of the box back the main
+    structure at the bottom of the box. This will set negative z_plane-state for those
+    atoms which are wrapped.
+
+    Arguments:
+        simulation_cell (dict): size and shape of the simulation cell
+        coordinates (np.array): coordinate data
+        percentage_of_box (float): how much of the cell is not wrapped
+
+    Returns:
+        wrapped_coordinates (np.array): coordinate data where high z_plane-values are
+        wrapped to negative z_plane-values
+    """
+    lz = simulation_cell["z_max"] - simulation_cell["z_min"]
+    cutoff = lz * (percentage_of_box / 100)
+    return [
+        coordinates[ii] - simulation_cell["z_vector"] if z > cutoff else coordinates[ii]
+        for ii, (x, y, z) in enumerate(coordinates)
+    ]

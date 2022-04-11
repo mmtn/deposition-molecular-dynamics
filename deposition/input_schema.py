@@ -1,14 +1,117 @@
+from enum import Enum
+import logging
 import os
+import re
 
-from schema import And, Optional, Or, Schema, Use
-
+from deposition.distributions import PositionDistributionEnum, VelocityDistributionEnum
 from deposition.enums import SettingsEnum, SimulationCellEnum
-from deposition.schema_validation import (
-    allowed_deposition_types,
-    allowed_position_distributions,
-    allowed_velocity_distributions,
-    strictly_positive,
-)
+from schema import And, Optional, Or, Schema, SchemaError, Use
+
+
+class DepositionTypeEnum(Enum):
+    """List of explicitly allowed deposition types along with conditionally required settings"""
+
+    MONATOMIC = ["deposition_element"]
+    MOLECULE = ["molecule_xyz_file"]
+
+
+def allowed_deposition_types(deposition_type):
+    """Checks that the given deposition type is in the list of allowed types."""
+    try:
+        return DepositionTypeEnum[deposition_type].name
+    except KeyError:
+        raise SchemaError(
+            f"deposition type must be one of: {[x.name for x in DepositionTypeEnum]}"
+        )
+
+
+def allowed_position_distributions(selected_distribution):
+    """Checks that the position distribution is in the list of allowed distributions"""
+    try:
+        return PositionDistributionEnum[selected_distribution].name
+    except KeyError:
+        raise SchemaError(
+            f"position distribution must be one of: {[x.name for x in PositionDistributionEnum]}"
+        )
+
+
+def allowed_velocity_distributions(selected_distribution):
+    """Checks that the velocity distribution is in the list of allowed distributions"""
+    try:
+        return VelocityDistributionEnum[selected_distribution].name
+    except KeyError:
+        raise SchemaError(
+            f"velocity distribution must be one of: {[x.name for x in VelocityDistributionEnum]}"
+        )
+
+
+def strictly_positive(number):
+    """Checks that the number is greater than zero."""
+    if number <= 0:
+        raise SchemaError("value must be greater than zero")
+    return number
+
+
+def reserved_keyword(keyword):
+    """Allows keywords to be reserved by molecular dynamics drivers where required."""
+    raise SchemaError("this key has been reserved for internal use")
+
+
+def check_input_file_syntax(driver):
+    """
+    Validates the syntax of the input file template.
+
+    Variables specified by `${var}` style notation are found and checked for mismatched delimiters. Errors and warnings
+    are provided when there is a mismatch between the keys provided in the settings and the variables specified in the
+    template file.
+
+    Arguments:
+        driver (MolecularDynamicsDriver): driver object with a schema dictionary
+    """
+    # regex matches any variable placeholder starting with the $ character, either ${with} or $without braces
+    template_key_regular_expression = (
+        r"[\$]([{]?[a-z_plane,A-Z][_,a-z_plane,A-Z,0-9]*[}]?)"
+    )
+    reserved_keywords = driver.get_reserved_keywords()
+
+    with open(driver.settings["path_to_input_template"]) as file:
+        template_matched_keys = re.findall(template_key_regular_expression, file.read())
+
+    # check for mismatched delimiters
+    template_keys = list()
+    for key in template_matched_keys:
+        if ("{" in key and "}" not in key) or ("}" in key and "{" not in key):
+            raise SchemaError(f"incomplete variable specification: {key}")
+        template_keys.append(key.strip("{}"))
+
+    # check that all internal keywords are present in the template
+    for key in reserved_keywords:
+        if key not in template_keys:
+            raise SchemaError(
+                f"key '{key} is used internally by {driver.name} and must be present in the template"
+            )
+
+    # check that the template keys are populated by the input settings
+    for key in template_keys:
+        if key in driver.settings.keys():  # a value has been provided
+            continue
+        elif key in reserved_keywords:  # ignore reserved keywords
+            continue
+        elif key not in driver.settings.keys():  # unknown key
+            raise SchemaError(
+                f"unknown key '{key}' present in input template but has no set value"
+            )
+
+    # check for leftover keys in the input settings that are not used in the template
+    schema_keys = [k.schema if type(k) is Optional else k for k in driver.schema.schema]
+    unused_keys = list()
+    for key in driver.settings:
+        if key not in template_keys and key not in schema_keys:
+            unused_keys.append(key)
+    if len(unused_keys) > 0:
+        logging.warning("unused keys detected in input file:")
+        [logging.warning(f"- {key}") for key in unused_keys]
+
 
 settings_schema = Schema(
     {
@@ -42,7 +145,7 @@ settings_schema = Schema(
         Optional(SettingsEnum.MOLECULE_XYZ_FILE.value, default=None): os.path.exists,
         Optional(SettingsEnum.POSITION_DISTRIBUTION_PARAMS.value, default=[]): list,
         Optional(SettingsEnum.POSTPROCESSING.value, default=None): dict,
-        Optional(SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value, default=False): bool,
+        Optional(SettingsEnum.STRICT_POSTPROCESSING.value, default=False): bool,
         Optional(SettingsEnum.VELOCITY_DISTRIBUTION_PARAMS.value, default=[]): list,
     }
 )
@@ -60,7 +163,8 @@ simulation_cell_schema = Schema(
 
 
 def get_settings_schema():
-    # TODO: update this documentation for new postprocessing settings, etc
+    # TODO: update this documentation for new postprocessing settings, etc.
+    # TODO: Move docs to dedicated location and cut down on docstring
     """
     A list of the required and optional settings for the simulation. These settings control the type and nature of the
     deposition to be simulated.
@@ -72,12 +176,12 @@ def get_settings_schema():
 
     - deposition_type (required, `str`)
         - the style of deposition to perform, may activate conditionally required settings (see below)
-        - available options: 'monatomic', 'diatomic', 'molecule'
+        - available options: 'MONATOMIC', 'diatomic', 'molecule'
     - deposition_height_Angstroms (required, `int` or `float`)
         - how far above the surface to add new atoms/molecules
     - deposition_temperature_Kelvin (required, `int` or `float`)
         - temperature of newly added atoms/molecules
-    - velocity_distribution (required, `str`)
+    - selected_distribution (required, `str`)
         - name of the method for generating new velocities
     - velocity_distribution_parameters (list)
         - settings for the given velocity distribution
@@ -109,7 +213,7 @@ def get_settings_schema():
 
     Conditionally required settings:
 
-    - deposition_element (required for 'monatomic' or 'diatomic' deposition, `string`)
+    - deposition_element (required for 'MONATOMIC' or 'diatomic' deposition, `string`)
         - symbol of the element to be deposited
     - diatomic_bond_length_Angstroms (required for 'diatomic' deposition, `int` or `float`):
         - diatomic bond length
@@ -124,7 +228,7 @@ def get_settings_schema():
         - prefix to the shell command when calling the molecular dynamics software, e.g. mpiexec
     - to_origin_before_each_iteration (optional, `bool`, default=False):
         - relocates the structure to the origin before each iteration to prevent migration from depositing on top
-    - strict_structural_analysis (optional, `bool`, default=False)
+    - strict_postprocessing (optional, `bool`, default=False)
         - raises an error instead of a warning if the structural analysis fails
     """
     return settings_schema

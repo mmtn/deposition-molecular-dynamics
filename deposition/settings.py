@@ -1,4 +1,6 @@
-from deposition import distributions, postprocessing, schema_validation
+import yaml
+
+from deposition import distributions, input_schema, postprocessing
 from deposition.enums import SettingsEnum
 
 
@@ -32,9 +34,7 @@ class Settings:
         self.postprocessing = settings[SettingsEnum.POSTPROCESSING.value]
         self.relaxation_time = settings[SettingsEnum.RELAXATION_TIME.value]
         self.simulation_cell = settings[SettingsEnum.SIMULATION_CELL.value]
-        self.strict_structural_analysis = settings[
-            SettingsEnum.STRICT_STRUCTURAL_ANALYSIS.value
-        ]
+        self.strict_postprocessing = settings[SettingsEnum.STRICT_POSTPROCESSING.value]
         self.substrate_xyz_file = settings[SettingsEnum.SUBSTRATE_XYZ_FILE.value]
         self.velocity_distribution = settings[SettingsEnum.VELOCITY_DISTRIBUTION.value]
         self.velocity_distribution_parameters = settings[
@@ -43,31 +43,51 @@ class Settings:
         self.validate(settings)
 
     def validate(self, settings):
-        """
-        Args:
-            settings:
-        """
+        """Performs additional validation not covered by the schema"""
+
         # check that required options for the deposition type are present
-        for requirement in schema_validation.DEPOSITION_TYPES[self.deposition_type]:
+        for requirement in input_schema.DepositionTypeEnum[self.deposition_type].value:
             assert (
                 requirement in settings.keys()
             ), f"{requirement} required in {self.deposition_type} deposition"
 
-        # check that the position distribution is valid
-        position_distribution = distributions.get_position_distribution(
-            self.position_distribution,
-            self.position_distribution_parameters,
-            None,
-            0.0,
+        # check that the position distribution has valid parameters
+        distributions.get_position_distribution(
+            self.position_distribution, None, 0.0, self.position_distribution_parameters
         )
 
-        # check that the velocity distribution is valid
-        velocity_distribution = distributions.get_velocity_distribution(
+        # check that the velocity distribution has valid parameters
+        distributions.get_velocity_distribution(
             self.velocity_distribution,
             self.velocity_distribution_parameters,
         )
 
-        # check that the postprocessing options are valid
+        # check that the postprocessing options have valid parameters
         if self.postprocessing is not None:
-            for name, args in self.postprocessing.items():
-                postprocessing.run(name, args, None, None, dry_run=True)
+            for name, parameters in self.postprocessing.items():
+                postprocessing.run(name, None, None, parameters, dry_run=True)
+
+    @staticmethod
+    def from_file(filename):
+        """
+        Read and validate a YAML file containing simulation settings.
+
+        Arguments:
+            filename (path): path to a YAML file containing settings for the simulation
+
+        Returns:
+            settings (dict): validated settings for the deposition simulation
+        """
+        with open(filename) as file:
+            settings_dict = yaml.safe_load(file)
+        settings_dict = input_schema.get_settings_schema().validate(settings_dict)
+        settings = Settings(settings_dict)
+        settings.validate(settings_dict)
+        return settings
+
+    def as_dict(self):
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if not key.startswith("__") and not callable(key)
+        }

@@ -1,9 +1,8 @@
 import os
 
-from schema import Or
-
 from deposition import io
 from deposition.drivers.molecular_dynamics_driver import MolecularDynamicsDriver
+from schema import Or
 
 
 class TemplateDriver(MolecularDynamicsDriver):
