@@ -22,15 +22,6 @@ class Status:
         self.pickle_location = pickle_location
         self.last_updated = last_updated
 
-    def as_dict(self):
-        return {
-            StatusEnum.ITERATION_NUMBER.value: self.iteration_number,
-            StatusEnum.SEQUENTIAL_FAILURES.value: self.sequential_failures,
-            StatusEnum.TOTAL_FAILURES.value: self.total_failures,
-            StatusEnum.PICKLE_LOCATION.value: self.pickle_location,
-            StatusEnum.LAST_UPDATED.value: self.last_updated,
-        }
-
     def write(self, filename):
         """
         Writes the current time, current iteration number, number of sequential
@@ -56,3 +47,13 @@ class Status:
             )
         except FileNotFoundError:
             raise FileNotFoundError(f"status file not found: {filename}")
+
+    def as_dict(self):
+        """Returns the status as a dictionary"""
+        return {
+            StatusEnum.ITERATION_NUMBER.value: self.iteration_number,
+            StatusEnum.SEQUENTIAL_FAILURES.value: self.sequential_failures,
+            StatusEnum.TOTAL_FAILURES.value: self.total_failures,
+            StatusEnum.PICKLE_LOCATION.value: self.pickle_location,
+            StatusEnum.LAST_UPDATED.value: self.last_updated,
+        }

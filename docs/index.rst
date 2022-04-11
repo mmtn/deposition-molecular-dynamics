@@ -8,10 +8,11 @@ Documentation
 .. toctree::
    :maxdepth: 1
 
-   example
-   List of settings <modules/schema_definitions>
+   settings
    drivers/drivers
+   contributing/contributing
    classes_and_modules
+   example
 
 
 README

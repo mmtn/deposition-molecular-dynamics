@@ -4,9 +4,9 @@ import shutil
 import subprocess
 from string import Template
 
-from deposition.state import State
-from deposition.enums import DirectoriesEnum
 from deposition import postprocessing, randomisation
+from deposition.enums import DirectoriesEnum
+from deposition.state import State
 
 
 class Iteration:
@@ -19,8 +19,7 @@ class Iteration:
 
     - relaxation: simulation at the specified temperature to equilibrate the system
     - deposition: simulation of the introduction of a new atom/molecule
-    - finalisation: the final simulation state is analysed against various criteria
-    and the data is stored
+    - finalisation: the final simulation state is analysed against various criteria and the data is stored
 
     This class is also responsible for using the `subprocess` package to run the
     molecular dynamics software.
@@ -52,6 +51,7 @@ class Iteration:
              success, pickle_location (tuple)
                 - success (bool): whether the iteration passes the structural analyses
                 - pickle_location (path): where the resulting data has been saved
+
         """
         logging.info(f"starting iteration {self.iteration_number}")
         self.relaxation()
@@ -62,7 +62,7 @@ class Iteration:
 
     def relaxation(self):
         """Runs the relaxation phase of the iteration."""
-        self.driver.write_inputs(self.relaxation_filename, self.state)
+        self.driver.write_inputs(self.relaxation_filename, self.state, "relaxation")
         self.call_process(self.relaxation_filename)
         self.state = self.driver.read_outputs(self.relaxation_filename)
 
@@ -75,7 +75,7 @@ class Iteration:
             self.driver.simulation_cell,
             self.driver.settings["velocity_scaling_from_metres_per_second"],
         )
-        self.driver.write_inputs(self.deposition_filename, self.state)
+        self.driver.write_inputs(self.deposition_filename, self.state, "deposition")
         self.call_process(self.deposition_filename)
         self.state = self.driver.read_outputs(self.deposition_filename)
 

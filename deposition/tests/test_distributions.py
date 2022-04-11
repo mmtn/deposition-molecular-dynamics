@@ -1,4 +1,5 @@
 import pytest
+
 from deposition import distributions
 
 POLYGON_COORDINATES = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)]

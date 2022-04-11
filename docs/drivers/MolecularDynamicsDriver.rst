@@ -3,6 +3,6 @@
 MolecularDynamicsDriver (generic base class)
 --------------------------------------------
 
-.. autoclass:: deposition.drivers.MolecularDynamicsDriver.MolecularDynamicsDriver
+.. autoclass:: deposition.drivers.molecular_dynamics_driver.MolecularDynamicsDriver
     :members:
     :undoc-members:

@@ -1,10 +1,11 @@
 import os.path
 
-import deposition.input_schema
-import deposition.settings
 import pytest
 import schema
 import yaml
+
+import deposition.input_schema
+import deposition.settings
 
 """
 Note: validation of data types is performed by the schema package, subject to 

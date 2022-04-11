@@ -1,12 +1,10 @@
 from enum import Enum
 
 import numpy as np
+
 from deposition.state import State
-from deposition.utils import (
-    generate_neighbour_list,
-    get_simulation_cell,
-    wrap_coordinates_in_z,
-)
+from deposition.utils import (generate_neighbour_list, get_simulation_cell,
+                              wrap_coordinates_in_z)
 
 
 def run(name, state, simulation_cell, parameters=None, dry_run=False):
@@ -34,6 +32,12 @@ class NumNeighboursCheck:
     """
     Assess the number of neighbours of all simulated atoms to check that everything is
     bonded together and there are no isolated regions.
+
+    Parameters:
+        - min_neighbours (`int`)
+            - the minimum number of neighbouring atoms for each atom
+        - bonding distance cutoff (Angstroms, `int` or `float`)
+            - minimum separation for two atoms to be considered bonded
     """
 
     num_parameters = 2
@@ -61,8 +65,7 @@ class NumNeighboursCheck:
 
 class ShiftToOrigin:
     """
-    Assess the number of neighbours of all simulated atoms to check that
-    everything is bonded together and there are no isolated regions.
+    Relocates the entire atomic structure to the origin (0, 0, 0) at the end of each iteration
     """
 
     default_parameters = True
@@ -70,7 +73,7 @@ class ShiftToOrigin:
     def __init__(self, state, simulation_cell, parameters):
         if parameters is None:
             parameters = self.default_parameters
-        assert parameters == True, "to turn on this routine, use shift_to_origin: True"
+        assert type(parameters) is bool, "shift to origin routine must be True or False"
         self.state = state
         self.simulation_cell = simulation_cell
 

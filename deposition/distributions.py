@@ -2,8 +2,9 @@ import math
 from enum import Enum
 
 import numpy as np
-from deposition import physics
 from matplotlib import path as mplpath
+
+from deposition import physics
 
 
 def get_position_distribution(name, polygon_coordinates, z_plane, arguments=None):
@@ -151,10 +152,14 @@ class GaussianVelocityDistribution:
 
 
 class PositionDistributionEnum(Enum):
+    """List of available position distribution classes"""
+
     fixed = FixedPositionDistribution
     uniform = UniformPositionDistribution
 
 
 class VelocityDistributionEnum(Enum):
+    """List of available velocity distribution classes"""
+
     fixed = FixedVelocityDistribution
     gaussian = GaussianVelocityDistribution

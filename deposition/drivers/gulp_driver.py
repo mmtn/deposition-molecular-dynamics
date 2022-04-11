@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+
 from deposition import io, physics
 from deposition.drivers import MolecularDynamicsDriver
 from deposition.state import State

@@ -6,6 +6,7 @@ import sys
 from string import Template
 
 import numpy as np
+
 from deposition.enums import DirectoriesEnum
 from deposition.state import State
 

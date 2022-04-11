@@ -3,6 +3,6 @@
 TemplateDriver
 --------------
 
-.. autoclass:: deposition.drivers.TemplateDriver.TemplateDriver
+.. autoclass:: deposition.drivers.template_driver.TemplateDriver
     :members:
     :undoc-members:

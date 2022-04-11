@@ -7,9 +7,7 @@ from deposition.settings import Settings
 
 
 @click.command()
-@click.option(
-    "--settings", "filename", required=True, type=click.Path(exists=True)
-)
+@click.option("--settings", "filename", required=True, type=click.Path(exists=True))
 def main(settings_filename):
     """
     Run the deposition calculation from the command line.

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from deposition import enums, postprocessing, state
 
 NUM_ATOMS = 20

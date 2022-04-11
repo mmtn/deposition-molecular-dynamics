@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+
 from deposition import distributions, io, physics
 from deposition.input_schema import DepositionTypeEnum
 
@@ -178,6 +179,7 @@ def get_new_velocities(
     if len(elements) == 1:  # or add_rotation == False:
         return translational_velocities
 
+    # add rotational velocities to molecules
     centre_of_mass, masses = physics.get_centre_of_mass(coordinates, elements)
     moment_of_inertia_xyz = physics.get_moment_of_inertia(coordinates, elements)
     distances = [np.subtract(coordinate, centre_of_mass) for coordinate in coordinates]

@@ -1,5 +1,5 @@
 # 1. Deposition settings (physics)
-deposition_type: MONATOMIC
+deposition_type: monatomic
 deposition_element: O
 substrate_xyz_file: test_data/valid_xyz.xyz
 deposition_height_Angstroms: 10

@@ -13,12 +13,12 @@ deposition
 A Python wrapper for simulating deposition processes with molecular dynamics.
 
 Requirements
-^^^^^^^^^^^^
+============
 
 - Python 3.8
 
 Installation
-^^^^^^^^^^^^
+============
 
 Clone the repository::
 
@@ -43,7 +43,7 @@ Various other `builders`_ are available
 .. _builders: https://www.sphinx-doc.org/en/master/usage/builders/index.html
 
 Structure of the code
-^^^^^^^^^^^^^^^^^^^^^
+=====================
 
 It is helpful to understand the layout of the code to use it most effectively. The
 primary object which manages the simulation is the :doc:`Deposition <classes/Deposition>`
@@ -53,7 +53,7 @@ have been performed and how many have failed. The `Deposition` class will also
 initialise a molecular dynamics :doc:`driver <drivers/drivers>`. In the input settings,
 the name of a driver must be specified. This driver is responsible for interfacing with
 a particular molecular dynamics software, e.g. LAMMPS, GULP, etc. It moves data between
-the calculation and the software.
+the ongoing deposition calculation and the software.
 
 A deposition calculation consists of multiple iterations. The
 :doc:`Iteration <classes/Iteration>` class represents one cycle of relaxing the system
@@ -67,10 +67,11 @@ Each iteration consists of the following steps:
     - finalisation: the final simulation state is analysed and the data is stored
 
 In the finalisation stage each iteration is assessed to be either a success or a
-failure. Successful iterations are stored in the `iterations` directory and the final
-state of the iteration is used as the initial state of the following iteration. Failed
-iterations are stored in the `failed` directory and the calculation returns to the state
-before the failed iteration.
+failure using :doc:`postprocessing <modules/postprocessing>` routines. It is possible to
+code your own routines to check for success or failure. Successful iterations are stored
+in a directory and the final state of the iteration is used as the initial state of the
+following iteration. Failed iterations are stored in a different directory and the
+calculation returns to the state before the failed iteration.
 
 The calculation is finalised when either the total number of iterations or the maximum
 number of failed iterations is exceeded.
@@ -82,12 +83,12 @@ number of failed iterations is exceeded.
    dynamics simulation.
 
 Usage
-^^^^^
+=====
 
 The settings for the deposition simulation should be specified in a `YAML`_ file. The
-full list of inputs can be seen :doc:`here <modules/schema_definitions>`. This should
-include settings for the molecular dynamics :doc:`driver <drivers/drivers>` you wish to
-use. A detailed :ref:`example <example>` is available.
+full list of inputs can be seen :doc:`here <settings>`. This should include settings
+for the molecular dynamics :doc:`driver <drivers/drivers>` you wish to use. A detailed
+:ref:`example <example>` is available.
 
 The initial state of the system before anything has been deposited must be provided in
 an XYZ file which is specified in the input settings.
@@ -126,3 +127,16 @@ Alternatively you can start a simulation from your own Python script::
     calculation = deposition.Deposition(settings)
     calculation.run()
 
+
+Customisation and contributing
+==============================
+
+The package is designed to be extended by the end user. The structure allows for
+and encourages the implementation of new routines for:
+
+    - interacting with alternative molecular dynamics software
+    - the positioning of new atoms/molecules
+    - the velocities of new atoms/molecules
+    - postprocessing of the structure following each deposition
+
+More information about how to make these additions is :ref:`here <contributing>`.

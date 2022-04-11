@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
-from deposition import input_schema, io
-from deposition.drivers.molecular_dynamics_driver import MolecularDynamicsDriver
-from deposition.state import State
 from pymatgen.io.lammps.data import LammpsData
 from schema import And, Optional, Or, Use
+
+from deposition import input_schema, io
+from deposition.drivers.molecular_dynamics_driver import \
+    MolecularDynamicsDriver
+from deposition.state import State
 
 
 class LAMMPSDriver(MolecularDynamicsDriver):

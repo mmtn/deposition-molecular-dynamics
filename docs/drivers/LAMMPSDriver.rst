@@ -5,5 +5,5 @@ LAMMPS Driver
 
 :noindex:
 
-.. autoclass:: deposition.drivers.LAMMPSDriver
+.. autoclass:: deposition.drivers.lammps_driver.LAMMPSDriver
     :members:

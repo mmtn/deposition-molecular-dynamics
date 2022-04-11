@@ -3,6 +3,6 @@
 Deposition
 ----------
 
-.. autoclass:: deposition.Deposition
+.. autoclass:: deposition.deposition.Deposition
     :members:
     :undoc-members:

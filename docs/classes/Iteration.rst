@@ -3,6 +3,6 @@
 Iteration
 ---------
 
-.. autoclass:: deposition.Iteration
+.. autoclass:: deposition.iteration.Iteration
     :members:
     :undoc-members:

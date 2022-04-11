@@ -86,6 +86,7 @@ class Settings:
         return settings
 
     def as_dict(self):
+        """Returns the settings as a dictionary"""
         return {
             key: value
             for key, value in self.__dict__.items()
