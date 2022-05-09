@@ -11,7 +11,7 @@ build on is provided (follow the link then click "[source]").
 
 The addition of a new molecular dynamics driver involves completing the following tasks:
 
-- make a copy of `drivers/TemplateDriver.py` and rename it according to the name of the molecular dynamics software
+- make a copy of `drivers/template_driver.py` and rename it according to the name of the molecular dynamics software
 - rename the class from `TemplateDriver` to the chosen name
 - add a value to the Enum in `drivers/driver_enums.py` referring to the new driver class
 - write implementations of `write_inputs` and `read_outputs` specific to the software

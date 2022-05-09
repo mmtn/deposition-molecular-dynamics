@@ -1,6 +1,10 @@
 .. Deposition documentation master file, created by
    sphinx-quickstart on Mon Sep 20 11:49:26 2021.
 
+README
+======
+
+.. include:: ../README.rst
 
 Documentation
 =============
@@ -13,13 +17,6 @@ Documentation
    contributing/contributing
    classes_and_modules
    example
-
-
-README
-======
-
-.. include:: ../README.rst
-
 
 Indices and tables
 ==================

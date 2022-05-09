@@ -1,5 +1,7 @@
-deposition
-----------
+DepositionMD
+------------
+
+A Python wrapper for simulating deposition processes with molecular dynamics.
 
 .. warning::
 
@@ -10,15 +12,13 @@ deposition
    .. _paper: https://doi.org/10.1038/s41534-020-00360-4
    .. _GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
 
-A Python wrapper for simulating deposition processes with molecular dynamics.
-
 Requirements
-============
+^^^^^^^^^^^^
 
-- Python 3.8
+- Python 3.8+
 
 Installation
-============
+^^^^^^^^^^^^
 
 Clone the repository::
 
@@ -43,7 +43,7 @@ Various other `builders`_ are available
 .. _builders: https://www.sphinx-doc.org/en/master/usage/builders/index.html
 
 Structure of the code
-=====================
+^^^^^^^^^^^^^^^^^^^^^
 
 It is helpful to understand the layout of the code to use it most effectively. The
 primary object which manages the simulation is the :doc:`Deposition <classes/Deposition>`
@@ -83,7 +83,7 @@ number of failed iterations is exceeded.
    dynamics simulation.
 
 Usage
-=====
+^^^^^
 
 The settings for the deposition simulation should be specified in a `YAML`_ file. The
 full list of inputs can be seen :doc:`here <settings>`. This should include settings
@@ -129,7 +129,7 @@ Alternatively you can start a simulation from your own Python script::
 
 
 Customisation and contributing
-==============================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The package is designed to be extended by the end user. The structure allows for
 and encourages the implementation of new routines for:

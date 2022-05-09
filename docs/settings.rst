@@ -63,9 +63,9 @@ may also be included in this settings section.
 Setting                                     Required        Type            Description
 ==========================================  ==============  ==============  =======================
 name                                        Yes             str             name of the class for handling simulations (see :class:`deposition.drivers.driver_enums.DriverEnum`)
-path_to_binary                              Yes             path            simulation cell length b (Angstroms)
-path_to_input_template                      Yes             path            simulation cell length c (Angstroms)
-velocity_scaling_from_metres_per_second     Yes             int/float       simulation cell angle alpha (degrees)
+path_to_binary                              Yes             path            path to the molecular dynamics binary program
+path_to_input_template                      Yes             path            path to the input template for this software
+velocity_scaling_from_metres_per_second     Yes             int/float       scaling factor used for generating velocities
 command_line_args                           No              str             additional arguments to the software at the command line
 ==========================================  ==============  ==============  =======================
 
