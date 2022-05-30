@@ -6,6 +6,7 @@ examples/
 
 # Python
 **/__pycache__/
+build/
 venv/
 deposition.egg-info
 

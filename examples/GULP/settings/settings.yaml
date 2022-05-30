@@ -1,6 +1,6 @@
 # deposition settings
 deposition_element: O
-deposition_type: monatomic
+deposition_type: MONATOMIC
 deposition_height_Angstroms: 4
 deposition_temperature_Kelvin: 300
 minimum_deposition_velocity_metres_per_second: 25

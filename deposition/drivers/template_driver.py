@@ -3,15 +3,13 @@ import os
 from schema import Or
 
 from deposition import io
-from deposition.drivers.MolecularDynamicsDriver import MolecularDynamicsDriver
+from deposition.drivers.molecular_dynamics_driver import \
+    MolecularDynamicsDriver
+from deposition.enums import SettingsEnum
 
 
 class TemplateDriver(MolecularDynamicsDriver):
-    """
-    Template to help with writing new MolecularDynamicsDriver classes
-    """
-
-    name = "Template"
+    """Template to help with writing new MolecularDynamicsDriver classes"""
 
     schema_dict = {
         "atomic_masses": list,
@@ -23,7 +21,7 @@ class TemplateDriver(MolecularDynamicsDriver):
         "simulation_time",
     ]
 
-    command = "${prefix} ${binary} < ${input_file} > ${output_file}"
+    command = "${prefix} ${binary} ${arguments} < ${input_file} > ${output_file}"
 
     def __init__(self, driver_settings, simulation_cell):
         super().__init__(
@@ -31,10 +29,12 @@ class TemplateDriver(MolecularDynamicsDriver):
             simulation_cell,
             command=self.command,
             schema_dict=self.schema_dict,
-            reserved_keywords=self.reserved_keywords
+            reserved_keywords=self.reserved_keywords,
         )
 
-    def write_inputs(self, filename, coordinates, elements, velocities, iteration_stage):
+    def write_inputs(
+        self, filename, coordinates, elements, velocities, iteration_stage
+    ):
         def write_coordinates(file, coordinates):
             pass
 
@@ -44,7 +44,18 @@ class TemplateDriver(MolecularDynamicsDriver):
         def write_velocities(file, elements):
             pass
 
-        io.write_file_using_template(f"{filename}.input", self.settings["path_to_input_template"], self.settings)
+        if iteration_stage == "deposition":
+            simulation_time = self.settings[SettingsEnum.DEPOSITION_TIME.value]
+        else:
+            simulation_time = self.settings[SettingsEnum.RELAXATION_TIME.value]
+
+        template_settings = self.settings.copy()
+        template_settings.update({"simulation_time": simulation_time})
+        io.write_file_using_template(
+            f"{filename}.input",
+            self.settings["path_to_input_template"],
+            template_settings,
+        )
         write_coordinates(f"{filename}.input", coordinates)
         write_elements(f"{filename}.input", elements)
         if iteration_stage == "deposition":

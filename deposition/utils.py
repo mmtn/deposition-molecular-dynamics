@@ -1,26 +1,28 @@
-import importlib
 import logging
 
 import numpy as np
-import yaml
+from pymatgen.core import IStructure, PeriodicSite
 from pymatgen.core.lattice import Lattice
 from pymatgen.io.lammps.data import lattice_2_lmpbox
 
-from deposition import drivers, schema_definitions, schema_validation
+from deposition import input_schema
+from deposition.drivers.driver_enums import DriverEnum
+from deposition.enums import SettingsEnum
 
 
 def get_simulation_cell(simulation_cell):
     """
-    Additional geometry of the simulation cell is calculated using routines from the `pymatgen` module including bounds
-    specification for use with LAMMPS and the cell vectors.
+    Additional geometry of the simulation cell is calculated using routines from the
+    `pymatgen` module including bounds specification for use with LAMMPS and the cell
+    vectors
 
     Arguments:
-        simulation_cell (dict): simulation cell settings (see
-                                :meth:`format <deposition.schema_definitions.simulation_cell_schema>`).
+        simulation_cell (dict): simulation cell settings
+            (see :meth:`format <deposition.schema_definitions.simulation_cell_schema>`)
     Return:
-        simulation_cell (dict): updated simulation cell with added keys for additional geometry
+        simulation_cell (dict): updated simulation cell with additional geometry
     """
-    simulation_cell = schema_definitions.simulation_cell_schema().validate(simulation_cell)
+    simulation_cell = input_schema.simulation_cell_schema.validate(simulation_cell)
     lammps_box, _ = lattice_2_lmpbox(Lattice.from_parameters(**simulation_cell))
 
     if lammps_box.tilt is None:
@@ -48,7 +50,7 @@ def get_simulation_cell(simulation_cell):
         "x_vector": np.array((x_max - x_min, 0, 0)),
         "y_vector": np.array((tilt_xy, y_max - y_min, 0)),
         "z_vector": np.array((tilt_xz, tilt_yz, z_max - z_min)),
-        "lammps_box": lammps_box
+        "lammps_box": lammps_box,
     }
 
     simulation_cell.update(additional_geometry_information)
@@ -56,67 +58,99 @@ def get_simulation_cell(simulation_cell):
     return simulation_cell
 
 
-def get_molecular_dynamics_driver(driver_settings, simulation_cell, deposition_time_picoseconds,
-                                  relaxation_time_picoseconds):
+def get_molecular_dynamics_driver(
+    driver_settings,
+    simulation_cell,
+    deposition_time_picoseconds,
+    relaxation_time_picoseconds,
+):
     """
-    Initialises one of the available molecular dynamics drivers. For more information about drivers see
-    :ref:`here <drivers>`.
+    Initialises one of the available molecular dynamics drivers. For more information
+    about drivers see :ref:`here <drivers>`.
 
     Arguments:
-        driver_settings (dict): settings for the specified driver, the `name` key chooses which driver is loaded
-        simulation_cell (dict): specifies the size and shape of the simulation cell
-        deposition_time_picoseconds (int or float): amount of time to run the deposition stage of each iteration
-        relaxation_time_picoseconds (int or float): amount of time to run the relaxation stage of each iteration
+        driver_settings (dict): settings for the specified driver
+        simulation_cell (dict): size and shape of the simulation cell
+        deposition_time_picoseconds (int or float): how long to run the deposition stage
+        relaxation_time_picoseconds (int or float): how long to run the relaxation stage
 
     Returns:
         driver (MolecularDynamicsDriver): driver object
     """
-    driver = None
-    chosen_driver = driver_settings["name"]
+    driver_name = driver_settings["name"]
+
+    try:
+        driver_class = DriverEnum[driver_name].value
+    except KeyError:
+        raise ValueError(f"no driver with the name '{driver_name}' was found")
+
+    # for driver in DriverEnum:
+    #     if driver_name == driver.name:
+    #         driver_class = driver.value
+    #         break
+    # else:
+    #     raise ValueError(f"no driver with the name '{chosen_driver}' was found")
+
     simulation_cell_full = get_simulation_cell(simulation_cell)
+    driver = driver_class(driver_settings, simulation_cell_full)
 
-    available_drivers = [driver for driver in dir(drivers) if driver.startswith("_") is False]
-    for driver_name in available_drivers:
-        test_driver = importlib.import_module(f"deposition.drivers.{driver_name}")
-        for driver_attr in dir(test_driver):
-            class_attr = getattr(test_driver, driver_attr)
-            if hasattr(class_attr, "__name__") and hasattr(class_attr, "name") and class_attr.__name__ == driver_name:
-                assert callable(class_attr.write_inputs), "driver class must provided write_inputs method"
-                assert callable(class_attr.read_outputs), "driver class must provided read_outputs method"
-                if class_attr.name.upper() == chosen_driver.upper():
-                    # initialise the driver but only allowing specific variables in the eval statement
-                    driver = eval(
-                        f"drivers.{driver_name}(driver_settings, simulation_cell_full)",
-                        {"__builtins__": {"drivers": drivers}},
-                        {"driver_settings": driver_settings, "simulation_cell_full": simulation_cell_full}
-                    )
-                    logging.info(f"Using driver {driver_name} for {chosen_driver}")
-
-    if driver is None:
-        raise ValueError(f"no driver with the name '{chosen_driver}' was found")
-
-    schema_validation.check_input_file_syntax(driver)
-    driver.settings.update({"deposition_time_picoseconds": deposition_time_picoseconds})
-    driver.settings.update({"relaxation_time_picoseconds": relaxation_time_picoseconds})
+    input_schema.check_input_file_syntax(driver)
+    driver.settings.update(
+        {SettingsEnum.DEPOSITION_TIME.value: deposition_time_picoseconds}
+    )
+    driver.settings.update(
+        {SettingsEnum.RELAXATION_TIME.value: relaxation_time_picoseconds}
+    )
+    logging.info(f"Using driver for {driver_name}")
 
     return driver
 
 
-def read_settings_from_file(settings_filename):
+def generate_neighbour_list(simulation_cell, coordinates, bonding_distance_cutoff):
     """
-    Read and validate a YAML file containing simulation settings.
+    Create a neighbour list for the current state to check for isolated atoms
+    or molecules.
 
     Arguments:
-        settings_filename (path): path to a YAML file containing settings for the simulation
+        simulation_cell (dict): specification of the size and shape of the simulation
+        cell
+        coordinates (np.array): coordinate data
+        bonding_distance_cutoff (float): distance below which to consider atoms
+        bonded (Angstroms)
 
     Returns:
-        settings (dict): validated settings for the deposition simulation
+        neighbour_list (list): list of integers counting the neighbours of each atom
     """
-    with open(settings_filename) as file:
-        settings = yaml.safe_load(file)
-    settings = schema_definitions.settings_schema().validate(settings)
+    lattice = Lattice.from_parameters(**simulation_cell)
+    fake_elements = ["X" for _ in range(len(coordinates))]
+    sites = [
+        PeriodicSite(element, coordinate, lattice, coords_are_cartesian=True)
+        for element, coordinate in zip(fake_elements, coordinates)
+    ]
+    structure = IStructure.from_sites(sites)
+    neighbours = structure.get_all_neighbors(bonding_distance_cutoff)
+    neighbour_list = [len(atom_neighbours) for atom_neighbours in neighbours]
+    return neighbour_list
 
-    for requirement in schema_validation.DEPOSITION_TYPES[settings['deposition_type']]:
-        assert requirement in settings.keys(), f"{requirement} required in {settings['deposition_type']} deposition"
 
-    return settings
+def wrap_coordinates_in_z(simulation_cell, coordinates, percentage_of_box=80):
+    """
+    Take cartesian state and wrap those at the top of the box back the main
+    structure at the bottom of the box. This will set negative z_plane-state for those
+    atoms which are wrapped.
+
+    Arguments:
+        simulation_cell (dict): size and shape of the simulation cell
+        coordinates (np.array): coordinate data
+        percentage_of_box (float): how much of the cell is not wrapped
+
+    Returns:
+        wrapped_coordinates (np.array): coordinate data where high z_plane-values are
+        wrapped to negative z_plane-values
+    """
+    lz = simulation_cell["z_max"] - simulation_cell["z_min"]
+    cutoff = lz * (percentage_of_box / 100)
+    return [
+        coordinates[ii] - simulation_cell["z_vector"] if z > cutoff else coordinates[ii]
+        for ii, (x, y, z) in enumerate(coordinates)
+    ]

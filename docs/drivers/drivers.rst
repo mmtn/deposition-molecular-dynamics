@@ -10,7 +10,7 @@ doing the calculation. This package currently provides drivers for :doc:`GULP <G
 documentation for information about additional settings and configuration.
 
 If you are interested in writing your own driver for a different piece of software see
-:doc:`here <new_drivers>`.
+:doc:`here <../contributing/new_drivers>`.
 
 The following settings are required for all drivers:
 
@@ -31,7 +31,7 @@ Additional documentation
    LAMMPSDriver
    TemplateDriver
    MolecularDynamicsDriver
-   new_drivers
+   ../contributing/new_drivers
 
 
 External links

@@ -3,6 +3,6 @@
 GULP Driver
 -----------
 
-.. autoclass:: deposition.drivers.GULPDriver
+.. autoclass:: deposition.drivers.gulp_driver.GULPDriver
     :members:
     :undoc-members:

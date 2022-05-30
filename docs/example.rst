@@ -86,7 +86,7 @@ deposition, the number of deposition events, etc. A full list of the settings re
 `here <modules/schema_definitions.html#deposition.schema_definitions.settings_schema>`_.
 
 .. literalinclude:: ../examples/LAMMPS/settings/settings.yaml
-   :lines: 1-13
+   :lines: 1-18
 
 2. Driver settings
 ^^^^^^^^^^^^^^^^^^
@@ -97,7 +97,7 @@ required in all cases (see :ref:`drivers`) and some are specific to the :ref:`LA
 run this example, change the `path_to_binary` setting according to where LAMMPS is installed.
 
 .. literalinclude:: ../examples/LAMMPS/settings/settings.yaml
-   :lines: 15-30
+   :lines: 20-35
 
 3. Simulation Cell
 ^^^^^^^^^^^^^^^^^^
@@ -106,7 +106,7 @@ This defines the overall size and shape of the periodic simulation cell and shou
 lengths and angles.
 
 .. literalinclude:: ../examples/LAMMPS/settings/settings.yaml
-   :lines: 32-39
+   :lines: 37-44
 
 .. _simulation cell: modules/schema_definitions.html#deposition.schema_definitions.simulation_cell_schema
 .. _driver settings: drivers/drivers.html

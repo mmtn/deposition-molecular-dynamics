@@ -1,6 +1,10 @@
 .. Deposition documentation master file, created by
    sphinx-quickstart on Mon Sep 20 11:49:26 2021.
 
+README
+======
+
+.. include:: ../README.rst
 
 Documentation
 =============
@@ -8,17 +12,11 @@ Documentation
 .. toctree::
    :maxdepth: 1
 
-   example
-   List of settings <modules/schema_definitions>
+   settings
    drivers/drivers
+   contributing/contributing
    classes_and_modules
-
-
-README
-======
-
-.. include:: ../README.rst
-
+   example
 
 Indices and tables
 ==================
