@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "Deposition"
 copyright = "2021, M. J. Cyster"
 author = "M. J. Cyster"
-release = "1.0.0-alpha"
+release = "1.0.0-beta"
 
 # -- General configuration ---------------------------------------------------
 

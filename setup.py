@@ -8,7 +8,7 @@ with open("LICENSE") as file:
 
 setup(
     name="deposition",
-    version="1.0.0-alpha",
+    version="1.0.0-beta",
     description="Molecular dynamics wrapper for deposition simulations",
     long_description=readme,
     author="M. J. Cyster",
