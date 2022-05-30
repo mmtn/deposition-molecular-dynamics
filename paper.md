@@ -1,5 +1,5 @@
 ---
-title: 'DepositionMD: a molecular dynamics wrapper for deposition processes'
+title: 'DepositionMD: a molecular dynamics wrapper for modelling deposition processes'
 tags:
   - Python
   - physics
@@ -33,9 +33,9 @@ Molecular dynamics (MD) is a powerful tool for simulating the motion of particle
 
 `DepositionMD` is a Python package for simulating deposition-like processes. Starting from initial coordinates, the package constructs input files for the chosen MD software which include one or more new atoms or molecules and runs the simulation. Following this the output is assessed to determine the success or failure of the deposition event. Upon a successful deposition the final state of this simulation is taken as the initial state for the next simulation where more new atoms (or molecules) are added. Otherwise the failed deposition is saved and the next simulation started from the most recent successful deposition.
 
-Originally developed to study the oxidation of aluminium substrates[@Cyster:2021], the package is flexible, extensible, and capable of simulating any deposition physics of interest. For instance we might consider adding sulfur atoms to molybdenum surfaces to improve our understanding of the formation of molybdenum disulfate. 
+`DepositionMD` provides classes which interface with the popular MD packages `GULP` [@Gale:2003] and `LAMMPS` [@LAMMPS] but can be integrated with any MD software by writing a Python class with methods to write input files and read data from the output files. The functional forms of the spatial and velocity distributions used for the deposited atoms or molecules can also be implemented by the user. Lastly, the user is able to construct customised routines which assess the success or failure of each event. 
 
-`DepositionMD` provides classes which interface with the popular MD packages `GULP`[@Gale:2003] and `LAMMPS`[@LAMMPS] but can be integrated with any MD software by writing a Python class with methods to write input files and read data from the output files. The functional forms of the spatial and velocity distributions used for the deposited atoms or molecules can also be implemented by the user. Lastly, the user is able to construct customised routines which assess the success or failure of each event. `DepositionMD` is a tool with a simple interface but a range of powerful options which allows researchers to focus on studying deposition phenomena without manually managing each of the many MD simulations required.
+Originally developed to study the oxidation of aluminium substrates [@Cyster:2021], the package is flexible and extensible. Simulating the deposition of any material on to any substrate is possible provided appropriate force field models are available which work with the molecular dynamics software. `DepositionMD` is a tool with a simple interface but a range of powerful options which allows researchers to focus on studying deposition phenomena without manually managing each of the many MD simulations required.
 
 # Acknowledgements
 

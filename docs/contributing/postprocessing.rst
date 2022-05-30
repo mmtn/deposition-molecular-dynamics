@@ -3,7 +3,8 @@
 Adding postprocessing routines
 ==============================
 
-New routines should be written as Python classes in `deposition/postprocessing.py` following the example
+Additional processing after each iteration may be required in certain cases. Some examples are provided in
+`deposition/postprocessing.py`. New routines should be written as Python classes following the example
 of the preexisting classes. These routines accept the current state of the simulation as a :ref:`State <module_state>`
 object and examine or modify it before returning a :ref:`State <module_state>` object.
 

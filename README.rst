@@ -38,7 +38,7 @@ Build the documentation::
 
 The docs can then be accessed by opening `html-docs/index.html` in your browser. Sphinx
 can also build the documentation in plain text, as a PDF using LaTeX, or in other ways.
-Various other `builders`_ are available
+Various other `builders`_ are available.
 
 .. _builders: https://www.sphinx-doc.org/en/master/usage/builders/index.html
 
@@ -62,9 +62,9 @@ before depositing an atom or molecule as specified by the input settings. The
 
 Each iteration consists of the following steps:
 
-    - relaxation: simulation at the specified temperature to equilibrate the system
-    - deposition: simulation of the introduction of a new atom or molecule
-    - finalisation: the final simulation state is analysed and the data is stored
+- relaxation: simulation at the specified temperature to equilibrate the system
+- deposition: simulation of the introduction of a new atom or molecule
+- finalisation: the final simulation state is analysed and the data is stored
 
 In the finalisation stage each iteration is assessed to be either a success or a
 failure using :doc:`postprocessing <modules/postprocessing>` routines. It is possible to
@@ -109,9 +109,9 @@ LAMMPS input template can be found :ref:`here <example_template>`.
 
 To summarise, the following files are required:
 
-    - calculation settings specified in YAML file
-    - the initial atomic structure specified in XYZ file
-    - an input template for the given molecular dynamics software
+- calculation settings specified in YAML file
+- the initial atomic structure specified in XYZ file
+- an input template for the given molecular dynamics software
 
 Once these requirements are satisfied the `run_deposition.py` script can be used to
 start the deposition from the command line. In directory where you have stored your
@@ -134,9 +134,9 @@ Customisation and contributing
 The package is designed to be extended by the end user. The structure allows for
 and encourages the implementation of new routines for:
 
-    - interacting with alternative molecular dynamics software
-    - the positioning of new atoms/molecules
-    - the velocities of new atoms/molecules
-    - postprocessing of the structure following each deposition
+- interacting with alternative molecular dynamics software
+- the positioning of new atoms/molecules
+- the velocities of new atoms/molecules
+- postprocessing of the structure following each deposition
 
 More information about how to make these additions is :ref:`here <contributing>`.
