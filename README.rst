@@ -3,9 +3,10 @@ DepositionMD
 
 A Python wrapper for simulating deposition processes with molecular dynamics.
 
-.. warning::
+.. note::
 
-   This repository is not maintained! It is freely available (licensed under GNU
+   This repository is not currently under active development, though I'm more than happy
+   to respond to any issues or pull requests as they come up. It is freely available (licensed under GNU
    `GPLv3`_) in the hopes that it will be useful to someone. If you do find this
    project useful in your work, please cite the `paper`_ for which it was developed.
 
